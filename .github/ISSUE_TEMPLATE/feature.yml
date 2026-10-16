@@ -1,0 +1,16 @@
+name: Возможность
+about: Предложение улучшения продукта
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Проблема и пользовательский сценарий
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Предлагаемое поведение и критерии приёмки
+    validations:
+      required: true
