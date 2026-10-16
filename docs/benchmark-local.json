@@ -1,0 +1,31 @@
+{
+  "timestamp_utc": "2026-10-16T18:59:51.181155+00:00",
+  "transport": "HTTP over network to running API",
+  "base_url": "http://127.0.0.1:8001",
+  "path": "/api/v1/chats/-1001001/dashboard",
+  "authentication": "demo",
+  "requests": 300,
+  "concurrency": 10,
+  "warmup_requests_excluded": 20,
+  "duration_seconds": 4.683956,
+  "requests_per_second": 64.048,
+  "successful_requests_per_second": 64.048,
+  "latency_ms": {
+    "p50": 114.436,
+    "p95": 370.115,
+    "p99": 590.169,
+    "maximum": 804.203
+  },
+  "latency_includes_errors": true,
+  "percentile_method": "nearest rank",
+  "successes": 300,
+  "errors": 0,
+  "status_counts": {
+    "200": 300
+  },
+  "targets": {
+    "max_p95_ms": 300.0,
+    "errors": 0
+  },
+  "targets_met": false
+}
