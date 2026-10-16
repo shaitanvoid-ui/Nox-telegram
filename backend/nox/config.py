@@ -1,3 +1,4 @@
+import re
 from functools import lru_cache
 from typing import Literal
 
@@ -6,7 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="NOX_", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="NOX_",
+        extra="ignore",
+        hide_input_in_errors=True,
+    )
 
     mode: Literal["demo", "production"] = "demo"
     database_url: str = "sqlite+aiosqlite:///./nox-demo.db"
@@ -32,6 +38,8 @@ class Settings(BaseSettings):
         if self.mode == "production":
             if not self.bot_token or len(self.webhook_secret) < 32:
                 raise ValueError("Production needs bot token and webhook secret of >=32 characters")
+            if not re.fullmatch(r"[A-Za-z0-9_-]{32,256}", self.webhook_secret):
+                raise ValueError("Webhook secret must be 32..256 characters: A-Z, a-z, 0-9, _ or -")
             if not self.database_url.startswith("postgresql+asyncpg://"):
                 raise ValueError("Production requires PostgreSQL via asyncpg")
             if not self.cors_origins or any(

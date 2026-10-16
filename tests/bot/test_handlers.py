@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
@@ -12,7 +13,15 @@ from aiogram.types import User as TelegramUser
 from nox.automation_runtime import execute_automation
 from nox.bot import build_dispatcher, onboard_chat
 from nox.db import Base, Database
-from nox.models import AutomationExecution, AutomationRule, Chat, ChatMember, ModerationCase
+from nox.models import (
+    AnalyticsAggregate,
+    AutomationExecution,
+    AutomationRule,
+    Chat,
+    ChatMember,
+    ModerationCase,
+    ShieldModule,
+)
 from nox.moderation import ModerationService
 from nox.shield import ShieldEngine
 from nox.telegram import TelegramGateway
@@ -168,3 +177,43 @@ async def test_persisted_join_rule_executes_once_and_fresh_author_rights_are_enf
             )
         ).all()
         assert [execution.status for execution in executions] == ["applied", "failed"]
+
+
+async def test_shield_counts_one_violation_for_multiple_policies_and_repeated_edit(
+    db: Database,
+) -> None:
+    bot, _ = provider()
+    gateway = TelegramGateway(bot)
+    setup = command_update("/setup").message
+    await onboard_chat(db, gateway, setup.chat, setup.from_user)
+    async with db.sessions() as session:
+        for key in ["anti_link", "anti_scam", "edit_guard"]:
+            module = await session.get(ShieldModule, (-1001, key))
+            module.enabled = True
+        await session.commit()
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    payload = command_update("https://evil.example seed phrase").model_dump(
+        mode="json",
+        by_alias=True,
+        exclude_none=True,
+    )
+    payload["message"]["from"] = {"id": 20, "is_bot": False, "first_name": "Member"}
+    payload["message"]["entities"] = []
+    incoming = Update.model_validate(payload)
+    await dispatcher.feed_update(bot, incoming)
+    edited = Update.model_validate(
+        {
+            "update_id": 101,
+            "edited_message": {
+                **incoming.message.model_dump(mode="json", by_alias=True, exclude_none=True),
+                "edit_date": int(datetime.now(UTC).timestamp()),
+            },
+        }
+    )
+    await dispatcher.feed_update(bot, edited)
+    async with db.sessions() as session:
+        aggregate = await session.get(
+            AnalyticsAggregate, (-1001, datetime.now(UTC).date().isoformat())
+        )
+        assert aggregate.violations == 1
+        assert aggregate.messages == 1

@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 import time
 from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
@@ -12,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
+from pydantic import ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import text
@@ -206,17 +208,24 @@ def create_app(settings: Settings | None = None, gateway: GatewayProtocol | None
         if settings.mode != "production" or not settings.webhook_secret:
             raise HTTPException(404, "Не найдено")
         secret = request.headers.get("x-telegram-bot-api-secret-token", "")
-        if not hmac.compare_digest(secret, settings.webhook_secret):
+        if not hmac.compare_digest(secret.encode("utf-8"), settings.webhook_secret.encode("ascii")):
             raise HTTPException(403, "Неверный webhook secret")
-        if int(request.headers.get("content-length", "0")) > 1048576:
+        try:
+            content_length = int(request.headers.get("content-length", "0"))
+        except ValueError:
+            raise HTTPException(422, "Некорректный Telegram update") from None
+        if content_length > 1048576:
             raise HTTPException(413, "Слишком большой update")
         from nox.bot import enqueue_update
 
         body = await request.body()
         if len(body) > 1048576:
             raise HTTPException(413, "Слишком большой update")
-        payload = await request.json()
-        await enqueue_update(db, payload)
+        try:
+            payload = json.loads(body)
+            await enqueue_update(db, payload)
+        except (ValidationError, json.JSONDecodeError, UnicodeDecodeError):
+            raise HTTPException(422, "Некорректный Telegram update") from None
         return {"ok": True}
 
     for router in (api_auth.router, api_chats.router, api_operations.router, api_studio.router):

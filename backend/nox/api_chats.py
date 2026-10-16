@@ -213,7 +213,17 @@ async def analytics(chat_id: int, session: DBSession, actor: Actor) -> dict[str,
     ).all()
     return {
         "activity": activity,
-        "growth": [{"label": p["label"], "members": p["members"]} for p in activity],
+        "growth": [
+            {"label": p["label"], "members": p["members"]} for p in activity if p["members"] > 0
+        ],
+        "coverage": {
+            "member_snapshots_complete": bool(activity) and all(p["members"] > 0 for p in activity)
+        },
+        "notice": (
+            "Для некоторых дней нет снимка числа участников. Эти дни исключены из графика роста."
+            if any(p["members"] <= 0 for p in activity)
+            else None
+        ),
         "moderation": [{"label": kind, "value": count} for kind, count in counts],
         "summary": {
             "messages": sum(p["messages"] for p in activity),

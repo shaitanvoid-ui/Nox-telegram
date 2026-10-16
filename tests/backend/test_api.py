@@ -7,11 +7,11 @@ from httpx import ASGITransport, AsyncClient
 from nox.config import Settings
 from nox.db import Base
 from nox.main import create_app
-from nox.models import Session
+from nox.models import AnalyticsAggregate, Session
 from nox.security import token_digest
 from nox.seed import DEMO_CHAT_ID, seed_demo
 from nox.telegram import DemoTelegramGateway, TelegramGatewayError
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 
 @pytest.fixture
@@ -184,3 +184,23 @@ async def test_protected_target_and_invalid_data_do_not_create_cases(client: Asy
     assert (
         await client.post(base, json={**body, "kind": "warn", "duration_minutes": 60})
     ).status_code == 422
+
+
+async def test_growth_omits_unavailable_membership_snapshots(client: AsyncClient) -> None:
+    await login(client)
+    app = client._nox_app  # type: ignore[attr-defined]
+    async with app.state.db.sessions() as session:
+        await session.execute(
+            update(AnalyticsAggregate)
+            .where(
+                AnalyticsAggregate.chat_id == DEMO_CHAT_ID,
+            )
+            .values(members=0)
+        )
+        await session.commit()
+    response = await client.get(f"/api/v1/chats/{DEMO_CHAT_ID}/analytics")
+    assert response.status_code == 200
+    assert response.json()["growth"] == []
+    assert response.json()["coverage"]["member_snapshots_complete"] is False
+    assert response.json()["notice"]
+    assert response.json()["summary"]["messages"] > 0

@@ -7,7 +7,7 @@ import logging
 import re
 from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.session.aiohttp import AiohttpSession
@@ -67,6 +67,11 @@ def parse_command(text: str) -> tuple[str, str, int | None]:
     duration: int | None = None
     first, _, rest = argument.partition(" ")
     match = _DURATION.fullmatch(first)
+    duration_like = first.lstrip("+-")[:1].isdigit() and any(
+        character.isalpha() for character in first
+    )
+    if command in {"ban", "mute"} and match is None and duration_like:
+        raise ValueError("Некорректный срок. Используйте 30m, 2h или 7d; от 1 минуты до 365 дней.")
     if match and command in {"ban", "mute"}:
         amount, unit = match.groups()
         duration = (
@@ -189,6 +194,38 @@ async def _safe_reply(message: Message, text: str) -> None:
     except TelegramAPIError:
         # Reply failure must not replay an already committed moderation action.
         logger.warning("bot_reply_unavailable", extra={"chat_id": message.chat.id})
+
+
+async def _record_violation(db: Database, message: Message, modules: list[str]) -> None:
+    """A durable per-message marker makes multi-policy/edit counters exact."""
+    insert = pg_insert if db.engine.dialect.name == "postgresql" else sqlite_insert
+    marker_id = str(uuid5(NAMESPACE_URL, f"nox:violation:{message.chat.id}:{message.message_id}"))
+    async with db.sessions() as session:
+        result = await session.execute(
+            insert(AuditEvent)
+            .values(
+                id=marker_id,
+                chat_id=message.chat.id,
+                actor_id=None,
+                action="shield.message_flagged",
+                detail=f"message:{message.message_id}; modules:{','.join(modules)}"[:2000],
+            )
+            .on_conflict_do_nothing(index_elements=[AuditEvent.id])
+        )
+        if result.rowcount == 1:  # type: ignore[attr-defined]
+            await session.execute(
+                insert(AnalyticsAggregate)
+                .values(
+                    chat_id=message.chat.id,
+                    day=datetime.now(UTC).date().isoformat(),
+                    violations=1,
+                )
+                .on_conflict_do_update(
+                    index_elements=[AnalyticsAggregate.chat_id, AnalyticsAggregate.day],
+                    set_={"violations": AnalyticsAggregate.violations + 1},
+                )
+            )
+        await session.commit()
 
 
 def build_dispatcher(
@@ -346,6 +383,7 @@ def build_dispatcher(
         )
         if not decisions:
             return
+        await _record_violation(db, message, [decision.module for decision in decisions])
         deleted = False
         automated = False
         for decision in decisions:

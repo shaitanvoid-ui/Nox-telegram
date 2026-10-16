@@ -85,8 +85,102 @@ def test_moderation_command_parser(text: str, expected: tuple[str, str, int | No
 
 
 @pytest.mark.parametrize(
-    "text", ["", "/mute причина", "/warn x", "/ban 999999d spam", "/unknown text"]
+    "text",
+    [
+        "",
+        "/mute причина",
+        "/warn x",
+        "/ban 999999d spam",
+        "/unknown text",
+        "/ban 0m spam",
+        "/ban 1s spam",
+        "/ban -1d spam",
+        "/ban 2w spam",
+        "/ban 1e6d spam",
+        "/ban 0m, spam",
+    ],
 )
 def test_invalid_command_parser(text: str) -> None:
     with pytest.raises(ValueError):
         parse_command(text)
+
+
+async def test_stale_recovery_uses_operation_time_and_finalizes_automation(
+    queue_db: Database,
+) -> None:
+    from nox.models import (
+        AutomationExecution,
+        AutomationRule,
+        Chat,
+        ModerationCase,
+        User,
+    )
+
+    now = datetime.now(UTC)
+    old = now - timedelta(days=1)
+    async with queue_db.sessions() as session:
+        session.add(Chat(id=-1001, title="test"))
+        session.add_all(
+            [
+                User(id=10, first_name="Admin", username=None),
+                User(id=20, first_name="Member", username=None),
+            ]
+        )
+        await session.flush()
+        session.add(
+            AutomationRule(
+                id="rule",
+                chat_id=-1001,
+                created_by=10,
+                name="rule",
+                trigger="member_join",
+                action="welcome",
+                conditions={},
+            )
+        )
+        session.add_all(
+            [
+                ModerationCase(
+                    id="fresh-revoke",
+                    chat_id=-1001,
+                    actor_id=10,
+                    target_user_id=20,
+                    kind="mute",
+                    reason="test",
+                    status="revoking",
+                    idempotency_key="fresh-revoke",
+                    request_hash="hash",
+                    created_at=old,
+                    operation_started_at=now,
+                ),
+                ModerationCase(
+                    id="stale-intent",
+                    chat_id=-1001,
+                    actor_id=10,
+                    target_user_id=20,
+                    kind="mute",
+                    reason="test",
+                    status="pending",
+                    idempotency_key="stale-intent",
+                    request_hash="hash",
+                    created_at=old,
+                    operation_started_at=old,
+                ),
+            ]
+        )
+        await session.flush()
+        session.add(
+            AutomationExecution(
+                id="execution",
+                rule_id="rule",
+                event_key="event",
+                status="pending",
+                created_at=old,
+            )
+        )
+        await session.commit()
+    await recover_stale(queue_db)
+    async with queue_db.sessions() as session:
+        assert (await session.get(ModerationCase, "fresh-revoke")).status == "revoking"
+        assert (await session.get(ModerationCase, "stale-intent")).status == "unknown"
+        assert (await session.get(AutomationExecution, "execution")).status == "unknown"
