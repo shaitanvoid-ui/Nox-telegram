@@ -103,5 +103,11 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: cp .env.example .env
       - run: docker compose config --quiet
-      - run: docker build -f infra/api.Dockerfile -t nox-api:ci .
-      - run: docker build -f infra/web.Dockerfile -t nox-web:ci .
+      - run: docker build -f infra/api.Dockerfile -t nox-api:local .
+      - run: docker build -f infra/web.Dockerfile -t nox-web:local .
+      - run: docker compose up -d --no-build --wait --wait-timeout 120
+      - run: curl --fail --retry 5 --retry-delay 2 http://localhost:8080/ready
+      - if: failure()
+        run: docker compose logs --tail=100
+      - if: always()
+        run: docker compose down
