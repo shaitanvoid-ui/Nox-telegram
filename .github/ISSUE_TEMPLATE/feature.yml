@@ -1,5 +1,5 @@
 name: Возможность
-about: Предложение улучшения продукта
+description: Предложение улучшения продукта
 labels: [enhancement]
 body:
   - type: textarea

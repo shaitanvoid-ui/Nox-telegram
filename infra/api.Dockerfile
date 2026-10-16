@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 UV_PYTHON_DOWNLOADS=never UV_LINK_MODE=copy
 WORKDIR /app
 RUN --mount=type=secret,id=proxy_ca \

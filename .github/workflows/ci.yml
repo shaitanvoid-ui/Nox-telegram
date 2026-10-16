@@ -12,29 +12,30 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
         env:
           POSTGRES_USER: nox
           POSTGRES_PASSWORD: nox-ci-only
           POSTGRES_DB: nox_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd 'pg_isready -U nox -d nox_test'
+          --health-cmd "pg_isready -U nox -d nox_test"
           --health-interval 5s --health-timeout 3s --health-retries 10
       redis:
-        image: redis:8-alpine
+        image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
         ports: ['6379:6379']
         options: >-
-          --health-cmd 'redis-cli ping'
+          --health-cmd "redis-cli ping"
           --health-interval 5s --health-timeout 3s --health-retries 10
     env:
       NOX_MODE: demo
       NOX_DATABASE_URL: postgresql+asyncpg://nox:nox-ci-only@localhost:5432/nox_test
       NOX_REDIS_URL: redis://localhost:6379/0
+      NOX_TEST_REDIS_URL: redis://localhost:6379/0
       NOX_TEST_POSTGRES_URL: postgresql+asyncpg://nox:nox-ci-only@localhost:5432/nox_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
         with:
           version: '0.12.23'
           enable-cache: true
@@ -54,13 +55,14 @@ jobs:
       run:
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
+      - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -69,12 +71,12 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
         with:
           version: '0.12.23'
           enable-cache: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
           cache: npm
@@ -87,7 +89,7 @@ jobs:
         env:
           NOX_MODE: demo
           NOX_DATABASE_URL: sqlite+aiosqlite:///./nox-e2e.db
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: playwright-results
@@ -98,7 +100,7 @@ jobs:
   containers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - run: cp .env.example .env
       - run: docker compose config --quiet
       - run: docker build -f infra/api.Dockerfile -t nox-api:ci .

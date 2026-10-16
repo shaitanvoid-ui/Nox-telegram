@@ -17,3 +17,6 @@ test-results/
 .DS_Store
 *.log
 *.egg-info/
+.backups/
+*.dump
+*.tsbuildinfo
