@@ -15,6 +15,7 @@ check:
 	uv run ruff format --check backend tests scripts
 	uv run ruff check backend tests scripts
 	uv run mypy backend/nox
+	npm run format:check --prefix apps/web
 	npm run lint --prefix apps/web
 	npm run typecheck --prefix apps/web
 test:

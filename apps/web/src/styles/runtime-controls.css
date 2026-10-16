@@ -1,0 +1,61 @@
+.telegram-entry {
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  border: 1px solid #8585ff1a;
+  background: #8585ff07;
+  border-radius: 12px;
+}
+.telegram-entry > svg {
+  color: #aaa6ef;
+}
+.telegram-entry strong {
+  color: #bdb9f0;
+  font-size: 13px;
+  font-weight: 500;
+}
+.telegram-entry > span {
+  color: #7d8aa5;
+  font-size: 11px;
+  line-height: 1.9;
+}
+.editor-note {
+  font-size: 10px;
+  line-height: 1.8;
+}
+html[data-keyboard="true"] .bottom-nav {
+  display: none;
+}
+html[data-telegram-active="false"] * {
+  animation-play-state: paused !important;
+}
+.modal {
+  max-height: calc(
+    var(--visual-height, 100dvh) - 60px - var(--safe-top) - var(--safe-bottom)
+  );
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pagination .button {
+  min-height: 32px;
+  padding: 5px 9px;
+  font-size: 9px;
+}
+.pagination > span {
+  color: #818ca4;
+  font-size: 9px;
+}
+.table-footer {
+  align-items: center;
+}
+
+.studio-history {
+  margin-top: 24px;
+}

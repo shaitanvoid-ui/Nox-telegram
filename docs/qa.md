@@ -1,6 +1,6 @@
 # Проверки и границы готовности NOX
 
-Дата отчёта: **2026-10-16**. Результаты ниже относятся к локальной среде разработки. Это первая работающая основа платформы; полный перечень возможностей исходного master prompt ещё не реализован. Production-готовность, работа настоящего Telegram и успешный GitHub Actions подтверждаются отдельно.
+Дата отчёта: **2026-10-16**. Результаты получены локально и в GitHub Actions. Это первая работающая основа платформы; полный перечень возможностей master prompt ещё не реализован. Настоящий Telegram и production-домен не подключены.
 
 ## Зафиксированные результаты
 
@@ -13,18 +13,20 @@
 | Playwright: пользовательский сценарий | **4 passed** после интеграции «Контура» | Настоящий FastAPI и временная SQLite; Telegram не вызывается |
 | Playwright: адаптивность | Пройдены восемь разделов на **320, 360, 375, 390, 430, 768, 1440 px** | Проверялись размеры DOM в Chromium; это не проверка настоящих Telegram Android/iOS |
 | Playwright: ошибки API | Успешно проверены явно смоделированный `503`, повтор запроса и `403` без административных переключателей | Ошибки HTTP подменены намеренно; это тест интерфейса, а не отказ реальной БД |
-| Screenshots | Созданы настоящие Chromium screenshots desktop **1440 px** и mobile **390 px** | Снимки «Контура» обновлены; дополнительно проверяется собранный Nginx frontend с PostgreSQL |
-| Docker | Собраны локальные `nox-api:local` и `nox-web:local`; запущены API, worker, PostgreSQL и Redis | Web-контейнер и маршрут через Nginx требуют итоговой проверки |
+| Screenshots | Созданы настоящие Chromium screenshots desktop **1440 px** и mobile **390 px** | Финальные снимки сделаны на собранном Nginx frontend с настоящей PostgreSQL; JavaScript-ошибок нет |
+| Docker | Собраны `nox-api:local` и `nox-web:local`; API, worker, PostgreSQL, Redis и web запущены | Nginx, static assets, CSP, demo API и readiness проверены на порту 8080; web health check выполняется без proxy только для loopback |
 | PostgreSQL: миграции | Чистая база доведена до `83cf61c29d3a`; `alembic check` не выявил расхождений | Миграции проверялись отдельно от `metadata.create_all` тестовых фикстур |
 | Backup/restore | Dump восстановлен в отдельную проверочную БД: **1 чат, 8 пользователей, 4 дела** | Это локальная проверка восстановления, без production PITR и внешнего backup-хранилища |
 | API smoke | Настоящие `/health`, `/ready`, demo-вход, список чатов и Dashboard вернули успешные ответы | Demo использует синтетические данные и не обращается к Telegram |
 | Runtime dependency audit | `pip-audit` завершился: **No known vulnerabilities found** | Проверен полный зафиксированный набор runtime-зависимостей, без dev-инструментов |
 | Frontend dependency audit | `npm audit --json`: **0 vulnerabilities**, код возврата 0 | Проверка реестра advisory на дату отчёта, а не гарантия отсутствия уязвимостей |
 | HTTP benchmark | 300/300 успешных ответов; p95 **240,442 мс**, бюджет 300 мс **выполнен** | Один Uvicorn worker, PostgreSQL, 10 клиентов, повышенный лимит API; локальный стенд не подтверждает production throughput |
-| GitHub | Создан приватный [shaitanvoid-ui/Nox-telegram](https://github.com/shaitanvoid-ui/Nox-telegram); первый backend push подтверждён | Frontend, документация, инфраструктура и окончательные исправления ещё требуют финального push |
-| GitHub Actions | Первый удалённый запуск завершился ошибками | Неполное содержимое первого push и quoting health command исправляются; новый успешный запуск пока не подтверждён |
+| GitHub | Приватный [shaitanvoid-ui/Nox-telegram](https://github.com/shaitanvoid-ui/Nox-telegram); исходники backend, Mini App, документация и инфраструктура отправлены | Секреты, .env, базы и локальные зависимости исключены из Git |
+| GitHub Actions | Все четыре jobs прошли: backend, frontend, e2e, containers | [Успешный запуск](https://github.com/shaitanvoid-ui/Nox-telegram/actions/runs/38955996560); последние проверки — в [workflow](https://github.com/shaitanvoid-ui/Nox-telegram/actions/workflows/ci.yml) |
 
-Отчёт обновляется после итоговых проверок: старые результаты не следует выдавать за проверку изменённого приложения. Сохранённые screenshots: [desktop](screenshots/dashboard-desktop.png), [mobile](screenshots/dashboard-mobile.png). Параметры и исходные цифры нагрузки находятся в [benchmark-final.json](benchmark-final.json). Ранний замер под параллельными сборками p95 370 мс сохранён в [benchmark-local.json](benchmark-local.json); методика — в [qa-notes.md](qa-notes.md).
+После механического разделения legacy CSS скомпилированный stylesheet совпал побайтно; финальные проверки доступны в workflow соответствующего commit. На мобильном отдельно проверено, что последнее быстрое действие заканчивается на y=747 px, а навигация начинается на y=780 px при viewport 390×844. [Снимок навигации](screenshots/mobile-navigation.png). Клавиатурный выбор дня работает в собранном приложении.
+
+Сохранённые screenshots: [desktop](screenshots/dashboard-desktop.png), [mobile](screenshots/dashboard-mobile.png). Параметры и исходные цифры нагрузки находятся в [benchmark-final.json](benchmark-final.json). Ранний замер под параллельными сборками p95 370 мс сохранён в [benchmark-local.json](benchmark-local.json); методика — в [qa-notes.md](qa-notes.md).
 
 ## Что проверяет backend
 
@@ -54,3 +56,5 @@ Production-adapter Telegram существует и проверяется ко�
 Установка, точные команды линтеров/типов/тестов и подготовка тестовой инфраструктуры: [development.md](development.md). Самостоятельный E2E использует временную SQLite-базу и настоящий FastAPI, запускаемый Playwright; он не использует production-секреты и никогда не отправляет команды Telegram.
 
 Перед первым реальным сообществом нужны успешный финальный CI, тестовый Telegram-чат, HTTPS Mini App, проверка актуальных Telegram-прав и подтверждённая процедура восстановления. Автоматическая публикация в production не включена.
+
+Изменение GitHub metadata (описание репозитория) текущая интеграция отклонила с HTTP403. Запись исходников и GitHub Actions работают; описание можно задать владельцем в About репозитория.

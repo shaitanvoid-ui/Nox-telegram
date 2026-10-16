@@ -1,0 +1,264 @@
+@media (min-width: 1600px) {
+  .main-content {
+    padding-top: 37px;
+  }
+  .hero {
+    min-height: 288px;
+    padding: 35px 40px;
+  }
+  .shield-visual {
+    right: 100px;
+    top: 12px;
+  }
+  .hero h2 {
+    font-size: 30px;
+  }
+  .metric {
+    padding: 20px 23px;
+  }
+  .metric-value {
+    font-size: 32px;
+  }
+}
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 205px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .workspace {
+    margin-left: 205px;
+    width: calc(100% - 205px);
+  }
+  .topbar {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+  .main-content {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+  .demo-banner {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+  .sidebar .nav-link.active::before {
+    left: -14px;
+  }
+  .shield-visual {
+    right: 10px;
+  }
+  .hero h2 {
+    font-size: 24px;
+  }
+  .hero {
+    padding: 26px;
+  }
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+  .metric-top > span:first-child {
+    font-size: 9px;
+  }
+  .metric {
+    padding: 15px;
+  }
+  .metric-value {
+    font-size: 26px;
+  }
+  .quick-action {
+    padding: 15px;
+    gap: 9px;
+  }
+  .quick-action strong {
+    font-size: 9px;
+  }
+  .quick-action small {
+    font-size: 7px;
+  }
+  .section-heading {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .case-table {
+    padding: 0 18px;
+  }
+  .case-table-head,
+  .case-row {
+    grid-template-columns: minmax(135px, 1.5fr) minmax(110px, 1fr) 90px 72px;
+    gap: 8px;
+  }
+  .case-table:has(.case-control) .case-table-head,
+  .case-table:has(.case-control) .case-row {
+    grid-template-columns: minmax(125px, 1.5fr) 100px 75px 70px 30px;
+  }
+  .studio-intro {
+    padding: 24px;
+    gap: 20px;
+  }
+  .studio-intro-copy {
+    min-width: 210px;
+  }
+  .flow-demo {
+    gap: 6px;
+  }
+  .flow-demo > div {
+    min-width: 0;
+    padding: 18px 12px;
+  }
+  .flow-demo small {
+    font-size: 6px;
+  }
+  .flow-arrow {
+    width: 12px;
+  }
+  .module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .appeals-list {
+    grid-template-columns: 1fr;
+  }
+  .rules-list {
+    grid-template-columns: 1fr;
+  }
+  .settings-grid {
+    gap: 15px;
+  }
+  .settings-panel {
+    padding: 20px;
+  }
+}
+@media (max-width: 1000px) {
+  .page-header h1 {
+    font-size: 25px;
+  }
+  .hero h2 {
+    font-size: 22px;
+  }
+  .shield-visual {
+    transform: scale(0.85);
+    right: -23px;
+  }
+  .hero-copy {
+    max-width: 320px;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .quick-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .quick-panel > .section-heading {
+    grid-column: 1 / -1;
+    padding-bottom: 13px;
+  }
+  .quick-action {
+    flex-wrap: wrap;
+    position: relative;
+    padding: 17px;
+    gap: 9px;
+  }
+  .quick-action > span:nth-child(2) {
+    flex-basis: 100%;
+  }
+  .quick-action > svg {
+    position: absolute;
+    top: 20px;
+    right: 14px;
+  }
+  .quick-bottom {
+    grid-column: 1 / -1;
+  }
+  .quick-action small {
+    font-size: 7px;
+  }
+  .quick-action strong {
+    font-size: 9px;
+  }
+  .metrics-grid {
+    gap: 10px;
+  }
+  .metric {
+    padding: 15px 13px;
+  }
+  .metric-top > span:first-child {
+    font-size: 8px;
+  }
+  .metric-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+  .metric-value {
+    font-size: 24px;
+  }
+  .metric-note {
+    font-size: 7px;
+  }
+  .studio-intro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 25px;
+  }
+  .studio-intro-copy {
+    max-width: none;
+  }
+  .studio-intro h2 br {
+    display: none;
+  }
+  .flow-demo {
+    justify-content: start;
+  }
+  .flow-demo > div {
+    min-width: 120px;
+  }
+  .settings-grid,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .intelligence-hero {
+    gap: 25px;
+    padding: 25px;
+  }
+  .intelligence-symbol {
+    width: 140px;
+    height: 150px;
+  }
+  .intelligence-symbol > span {
+    width: 100px;
+    height: 100px;
+  }
+  .intelligence-symbol > span:last-child {
+    width: 140px;
+    height: 140px;
+  }
+  .intelligence-hero h2 {
+    font-size: 24px;
+  }
+  .policy-grid {
+    gap: 12px;
+  }
+  .policy-card {
+    padding: 18px;
+  }
+  .protection-meter {
+    min-width: 95px;
+  }
+  .shield-summary {
+    gap: 15px;
+    padding: 20px;
+  }
+  .moderation-overview {
+    gap: 10px;
+  }
+  .small-stat {
+    gap: 9px;
+  }
+  .small-stat div > span {
+    font-size: 8px;
+  }
+  .appeals-link {
+    padding: 12px;
+  }
+}
