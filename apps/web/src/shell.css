@@ -1,0 +1,254 @@
+/* Shared reading scale and touch geometry around the Kontur workspace. */
+:root {
+  --border: rgba(146, 156, 178, 0.15);
+  --muted: #929cb2;
+}
+.sidebar {
+  overflow-y: auto;
+}
+.sidebar-note,
+.content-footer {
+  display: none;
+}
+.button {
+  min-height: 44px;
+  font-size: 13px;
+}
+.icon-button {
+  min-height: 44px;
+  min-width: 44px;
+}
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+.section-heading h2 {
+  font-size: 17px;
+}
+.section-heading p {
+  font-size: 12px;
+  color: #929cb2;
+}
+.page-header p {
+  font-size: 14px;
+  color: #929cb2;
+}
+.text-link {
+  min-height: 44px;
+  font-size: 12px;
+}
+.module-card > p,
+.shield-summary p,
+.emergency-panel p,
+.studio-intro p,
+.intelligence-hero p,
+.appeals-principle p,
+.settings-panel p,
+.privacy-note {
+  font-size: 13px;
+  color: #929cb2;
+}
+.module-card h2,
+.emergency-panel h2,
+.shield-summary h2 {
+  font-size: 17px;
+}
+.module-card-bottom > span,
+.rule-card-top > div > span,
+.field small,
+.audit-row p,
+.privacy-note {
+  font-size: 12px;
+}
+.field > span,
+.audit-row strong {
+  font-size: 14px;
+}
+.modal-header p,
+.modal-copy {
+  font-size: 14px;
+  color: #929cb2;
+}
+.modal-header .eyebrow {
+  font-size: 10px;
+}
+.modal-actions .button {
+  min-height: 44px;
+  font-size: 13px;
+}
+.tabs button {
+  min-height: 44px;
+  font-size: 13px;
+}
+.search-input input {
+  min-height: 44px;
+  font-size: 16px;
+}
+.table-footer,
+.table-footer .pagination > span {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.table-footer .pagination .button {
+  min-height: 44px;
+  font-size: 12px;
+}
+.case-person strong,
+.member-name strong {
+  font-size: 13px;
+}
+.case-person > div > span,
+.member-name > span {
+  font-size: 12px;
+  color: #929cb2;
+}
+.case-action {
+  font-size: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.case-date {
+  font-size: 11px;
+  color: #929cb2;
+  flex-wrap: wrap;
+}
+.case-row .badge {
+  font-size: 11px;
+  white-space: normal;
+}
+.case-table-head {
+  font-size: 11px;
+  color: #929cb2;
+}
+.member-row .badge {
+  font-size: 11px;
+}
+.member-joined {
+  font-size: 12px;
+}
+.metric-top > span:first-child {
+  font-size: 12px;
+}
+.metric-note {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.metric-value {
+  font-variant-numeric: tabular-nums;
+}
+.rule-card-top h2 {
+  font-size: 16px;
+}
+.rule-flow > span,
+.rule-card-bottom .text-link {
+  font-size: 12px;
+}
+.flow-demo span {
+  font-size: 13px;
+}
+.flow-demo small {
+  font-size: 11px;
+}
+.policy-card h3 {
+  font-size: 14px;
+}
+.policy-card p {
+  font-size: 12px;
+}
+.appeal-card > p {
+  font-size: 14px;
+}
+.appeal-bottom .button {
+  min-height: 44px;
+  font-size: 12px;
+}
+@media (min-width: 768px) {
+  .nav-link {
+    font-size: 14px;
+    min-height: 46px;
+  }
+  .sidebar-chat strong {
+    font-size: 13px;
+  }
+  .sidebar-chat > div > span {
+    font-size: 11px;
+  }
+  .workspace-label {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .profile strong {
+    font-size: 13px;
+  }
+  .profile small,
+  .sidebar-version {
+    font-size: 11px;
+  }
+  .breadcrumbs,
+  .connection {
+    font-size: 12px;
+  }
+  .topbar .badge {
+    font-size: 11px;
+  }
+  .demo-banner {
+    font-size: 12px;
+  }
+  .demo-label {
+    font-size: 10px;
+  }
+  .page-header h1 {
+    font-size: 32px;
+  }
+}
+@media (max-width: 767px) {
+  .main-content {
+    padding-bottom: calc(96px + var(--safe-bottom));
+  }
+  .bottom-nav > a,
+  .bottom-nav > button {
+    min-height: 56px;
+  }
+  .bottom-nav > a > span,
+  .bottom-nav > button > span {
+    font-size: 10px;
+  }
+  .demo-banner {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .mobile-chat select {
+    font-size: 16px;
+    max-width: calc(100% - 55px);
+  }
+  .case-person > div > span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .case-action {
+    font-size: 11px;
+  }
+  .case-date,
+  .case-row > .badge {
+    font-size: 11px;
+  }
+  .field > span {
+    font-size: 14px;
+  }
+  .table-footer .pagination {
+    flex-wrap: wrap;
+  }
+  .list-toolbar {
+    gap: 16px;
+  }
+  .distribution-row {
+    grid-template-columns: minmax(0, 1fr) minmax(40px, 1fr) 25px;
+  }
+}
+.field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #c8d0e3;
+  line-height: 1.6;
+}
