@@ -32,7 +32,8 @@
   justify-content: space-between;
   padding: 0 12px;
   margin: 44px 0 11px;
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   letter-spacing: 1.3px;
   color: #77767f;
 }
@@ -210,6 +211,7 @@
   display: flex;
   justify-content: space-between;
   margin: 20px 0 0;
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.3px;
   color: #716b7c;
@@ -268,7 +270,8 @@
   align-items: center;
   gap: 8px;
   color: #b8b1c3;
-  font-size: 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   letter-spacing: 0.7px;
 }
 .nox-topbar-status .nox-live-dot {
@@ -378,6 +381,7 @@
   align-items: center;
   gap: 12px;
   color: #8a838f;
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 1.1px;
 }
@@ -434,7 +438,8 @@
   gap: 10px;
   margin-bottom: 28px;
   color: #b9b1c7;
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   letter-spacing: 1.7px;
 }
 .nox-welcome-eyebrow > span {
@@ -447,11 +452,11 @@
 .nox-welcome h1 {
   margin: 0;
   color: #f7f5fc;
-  font-family: var(--font-display, Manrope, sans-serif);
+  font-family: var(--font-display, "Onest", sans-serif);
   font-size: clamp(58px, 6.4vw, 105px);
   font-weight: 500;
   line-height: 0.99;
-  letter-spacing: -0.065em;
+  letter-spacing: -0.04em;
 }
 .nox-welcome h1 > span {
   color: #c3bacf;
@@ -568,6 +573,7 @@
   bottom: 48px;
   z-index: 1;
   color: #9b91aa;
+  font-family: var(--font-mono);
   font-size: 9px;
   line-height: 1.8;
   letter-spacing: 1px;
@@ -578,6 +584,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr auto;
   gap: 20px;
+  font-family: var(--font-mono);
   max-width: 1540px;
   margin: 0 auto;
   padding-top: 24px;
@@ -830,13 +837,13 @@
   }
   .nox-welcome-eyebrow {
     margin-bottom: 21px;
-    font-size: 8px;
+    font-size: 11px;
     letter-spacing: 1.4px;
   }
   .nox-welcome h1 {
     font-size: clamp(44px, 11.8vw, 70px);
     line-height: 1.01;
-    letter-spacing: -0.065em;
+    letter-spacing: -0.04em;
   }
   .nox-welcome h1 > span {
     color: #aaa1b7;

@@ -21,10 +21,10 @@
   font-size: 11px;
 }
 .nd-chart-metric > strong {
-  font-family: var(--font-display, "Inter", sans-serif);
+  font-family: var(--font-sans, "Inter", sans-serif);
   font-size: 33px;
-  font-weight: 400;
-  letter-spacing: -0.045em;
+  font-weight: 300;
+  letter-spacing: -0.04em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }

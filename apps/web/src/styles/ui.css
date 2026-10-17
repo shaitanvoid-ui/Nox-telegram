@@ -13,8 +13,9 @@
   flex-shrink: 0;
 }
 .brand-wordmark {
+  font-family: var(--font-display);
   font-size: 27px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.035em;
 }
@@ -175,6 +176,7 @@
   gap: 9px;
   margin: 0;
   color: #a1a0aa;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   line-height: 1.5;
@@ -202,9 +204,9 @@
   color: #f4f3f6;
   font-family: var(--font-display, inherit);
   font-size: clamp(32px, 3.8vw, 42px);
-  font-weight: 450;
+  font-weight: 500;
   line-height: 1.05;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.04em;
   overflow-wrap: anywhere;
 }
 .page-description {
@@ -236,8 +238,8 @@
   color: #efedf4;
   font-family: var(--font-display, inherit);
   font-size: 20px;
-  font-weight: 450;
-  letter-spacing: -0.035em;
+  font-weight: 500;
+  letter-spacing: -0.04em;
   line-height: 1.25;
 }
 .section-heading p {
@@ -369,8 +371,9 @@
   color: #f4f2f9;
   font-size: clamp(32px, 3.5vw, 44px);
   line-height: 1;
-  font-weight: 400;
-  letter-spacing: -0.05em;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 .metric-note {
@@ -541,9 +544,9 @@ input[type="range"] {
   color: #e6e2ec;
   font-family: var(--font-display, inherit);
   font-size: 22px;
-  font-weight: 450;
+  font-weight: 500;
   line-height: 1.2;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.04em;
 }
 .empty-state p,
 .error-state p,
@@ -623,16 +626,16 @@ input[type="range"] {
   min-width: 0;
 }
 .modal-header .eyebrow {
-  font-size: 10px;
+  font-size: 11px;
 }
 .modal-header h2 {
   margin: 12px 0 0;
   color: #f1eef6;
   font-family: var(--font-display, inherit);
   font-size: 29px;
-  font-weight: 450;
+  font-weight: 500;
   line-height: 1.15;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
 }
 .modal-description {
   margin: 12px 0 0;

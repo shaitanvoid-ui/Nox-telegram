@@ -13,15 +13,33 @@ from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import TelegramAPIError
 from aiogram.filters import Command
+from aiogram.types import (
+    CallbackQuery,
+    ChatMemberUpdated,
+    InlineKeyboardMarkup,
+    LinkPreviewOptions,
+    Message,
+    Update,
+)
 from aiogram.types import Chat as TelegramChat
-from aiogram.types import ChatMemberUpdated, Message, Update
 from aiogram.types import User as TelegramUser
+from aiogram.utils.formatting import Text
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import IntegrityError
 
 from nox.automation_runtime import execute_automation
+from nox.bot_messages import (
+    HELP_CALLBACKS,
+    anonymous_admin_message,
+    error_message,
+    help_keyboard,
+    help_message,
+    moderation_message,
+    reply_required_message,
+    setup_message,
+)
 from nox.config import Settings, get_settings
 from nox.db import Database
 from nox.models import (
@@ -188,9 +206,15 @@ async def onboard_chat(
         await session.commit()
 
 
-async def _safe_reply(message: Message, text: str) -> None:
+async def _safe_reply(
+    message: Message, content: Text, reply_markup: InlineKeyboardMarkup | None = None
+) -> None:
     try:
-        await message.answer(text)
+        await message.answer(
+            **content.as_kwargs(),
+            link_preview_options=LinkPreviewOptions(is_disabled=True),
+            reply_markup=reply_markup,
+        )
     except TelegramAPIError:
         # Reply failure must not replay an already committed moderation action.
         logger.warning("bot_reply_unavailable", extra={"chat_id": message.chat.id})
@@ -238,32 +262,54 @@ def build_dispatcher(
 
     @router.message(Command("start", "help"))
     async def help_command(message: Message) -> None:
-        await _safe_reply(
-            message,
-            "Astra — управление сообществом.\n"
-            "В группе: /setup (для администратора). Выдайте боту права администратора.\n"
-            "Ответьте на сообщение участника:\n"
-            "/warn причина · /unwarn причина\n"
-            "/ban [7d] причина · /unban причина\n"
-            "/mute 30m причина · /unmute причина · /kick причина\n"
-            "Все действия проверяют реальные права Telegram и сохраняются в журнале.",
-        )
+        await _safe_reply(message, help_message(), help_keyboard())
+
+    @router.callback_query(F.data.in_(HELP_CALLBACKS))
+    async def help_navigation(query: CallbackQuery) -> None:
+        # Public reference pages only: callbacks never mutate chat settings or punishments.
+        try:
+            await query.answer()
+            if (
+                not isinstance(query.message, Message)
+                or query.message.date.timestamp() == 0
+                or query.data not in HELP_CALLBACKS
+            ):
+                return
+            page = HELP_CALLBACKS[query.data]
+            content = help_message(page)
+            if query.message.text == content.as_kwargs()["text"]:
+                return  # Repeated taps should not produce Telegram's "not modified" error.
+            await query.message.edit_text(
+                **content.as_kwargs(),
+                link_preview_options=LinkPreviewOptions(is_disabled=True),
+                reply_markup=help_keyboard(page),
+            )
+        except TelegramAPIError:
+            logger.warning("bot_help_navigation_unavailable")
 
     @router.message(Command("setup"))
     async def setup_command(message: Message) -> None:
         if message.from_user is None or message.sender_chat is not None:
-            await _safe_reply(
-                message, "Используйте личный профиль администратора, не анонимный режим."
-            )
+            await _safe_reply(message, anonymous_admin_message())
             return
         try:
             await onboard_chat(db, gateway, message.chat, message.from_user)
         except (ValueError, TelegramGatewayError) as error:
-            await _safe_reply(message, str(error))
+            await _safe_reply(
+                message,
+                error_message(
+                    str(error),
+                    category="telegram"
+                    if isinstance(error, TelegramGatewayError)
+                    else "validation",
+                    retry_after=error.retry_after
+                    if isinstance(error, TelegramGatewayError)
+                    else None,
+                ),
+            )
             return
         await _safe_reply(
-            message,
-            "Чат подключён к Astra. Откройте Mini App через меню бота. Настройки сохранены.",
+            message, setup_message(message.chat.title or "Сообщество", message.chat.id)
         )
 
     @router.my_chat_member()
@@ -281,12 +327,10 @@ def build_dispatcher(
         actor = message.from_user
         target = message.reply_to_message.from_user if message.reply_to_message else None
         if actor is None or message.sender_chat is not None:
-            await _safe_reply(
-                message, "Используйте личный профиль администратора, не анонимный режим."
-            )
+            await _safe_reply(message, anonymous_admin_message())
             return
         if target is None or (message.reply_to_message and message.reply_to_message.sender_chat):
-            await _safe_reply(message, "Отправьте команду ответом на сообщение участника.")
+            await _safe_reply(message, reply_required_message())
             return
         try:
             action, reason, duration = parse_command(message.text or "")
@@ -310,26 +354,37 @@ def build_dispatcher(
             TelegramGatewayError,
         ) as error:
             await _safe_reply(
-                message, error.message if isinstance(error, AccessDenied) else str(error)
+                message,
+                error_message(
+                    error.message if isinstance(error, AccessDenied) else str(error),
+                    category=(
+                        "telegram"
+                        if isinstance(error, TelegramGatewayError)
+                        else "permission"
+                        if isinstance(error, (AccessDenied, PermissionError))
+                        else "conflict"
+                        if isinstance(error, ConflictError)
+                        else "validation"
+                    ),
+                    retry_after=error.retry_after
+                    if isinstance(error, TelegramGatewayError)
+                    else None,
+                ),
             )
             return
-        if case.status == "applied":
-            await _safe_reply(
-                message, f"Действие /{action} выполнено. Дело {case.id[:8]}.\nПричина: {reason}"
-            )
-        elif case.status == "unknown":
-            await _safe_reply(
-                message,
-                "Telegram не подтвердил результат. Не повторяйте действие автоматически. "
-                f"Дело {case.id[:8]} требует проверки.",
-            )
-        elif case.status == "pending":
-            await _safe_reply(message, f"Действие уже обрабатывается. Дело {case.id[:8]}.")
-        else:
-            await _safe_reply(
-                message,
-                f"Действие не выполнено ({case.error_code or case.status}). Дело {case.id[:8]}.",
-            )
+        await _safe_reply(
+            message,
+            moderation_message(
+                kind=case.kind,
+                status=case.status,
+                case_id=case.id,
+                target=target,
+                actor=actor,
+                reason=case.reason,
+                expires_at=case.expires_at,
+                error_code=case.error_code,
+            ),
+        )
 
     async def inspect_message(message: Message) -> None:
         actor = message.from_user
@@ -540,7 +595,12 @@ async def poll() -> None:
                 updates = await bot.get_updates(
                     offset=offset,
                     timeout=25,
-                    allowed_updates=["message", "edited_message", "my_chat_member"],
+                    allowed_updates=[
+                        "message",
+                        "edited_message",
+                        "my_chat_member",
+                        "callback_query",
+                    ],
                 )
                 for incoming in updates:
                     await enqueue_update(db, incoming.model_dump(mode="json", exclude_none=True))

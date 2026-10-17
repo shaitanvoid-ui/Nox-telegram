@@ -6,11 +6,11 @@
 
 | Проверка | Полученный результат | Граница результата |
 | --- | --- | --- |
-| Backend: Pytest | **141 passed**, PostgreSQL и Redis, 17 октября | Telegram заменён контролируемыми адаптерами; локальный общий прогон без пропусков |
-| Backend: Ruff format, Ruff lint, mypy | Успешно после изменения пользовательского названия | Бизнес-логика backend в этой итерации не менялась |
+| Backend: Pytest | **175 passed**, PostgreSQL и Redis, 17 октября | Telegram заменён контролируемыми адаптерами; локальный общий прогон без пропусков |
+| Backend: Ruff format, Ruff lint, mypy | Успешно после обновления сообщений | Проверены 21 модуль, обработчики команд и read-only справки; сервис модерации сохранён |
 | Frontend: Vitest | **27 passed**, четыре файла | График, крайние значения данных, состояния запросов, API, Telegram browser fallback, подписи полей, диалоги и фокус |
 | Frontend: Prettier, ESLint, TypeScript | Все проверки прошли | Полностью заменённые экраны и компоненты |
-| Production build | Успешно, Vite | Manrope и Inter загружаются локально; графика WebP около 140/51 КБ |
+| Production build | Успешно, Vite | Onest, Inter и JetBrains Mono загружаются локально; графика WebP около 140/51 КБ |
 | Frontend dependency audit | **0 vulnerabilities** | Состояние реестра advisory на дату проверки, не гарантия отсутствия неизвестных проблем |
 | Playwright | **4 passed**, после переименования в Astra | Настоящий FastAPI и временная SQLite; действия Telegram не отправляются |
 | Docker | API и frontend собраны; пять сервисов запущены, readiness успешен | API, worker, PostgreSQL, Redis и Nginx; локальный demo |
@@ -20,9 +20,15 @@
 
 Новый визуальный бриф: [reference-redesign.md](design/reference-redesign.md). Прежний «Контур» и результаты старых снимков не являются основанием для приёмки нового frontend.
 
+Внешний временный предпросмотр дополнительно проверен через Chromium по HTTPS: вход в demo, Dashboard, новые шрифты и отсутствие JavaScript-ошибок. Транспорт вынесен в отдельный Docker-контейнер с ping/pong и перезапуском при потере связи. Случайный адрес может измениться после переподключения; это не production-домен и не постоянный hosting. Адрес не фиксируется в документации.
+
+## Форматирование сообщений Telegram
+
+Добавлены 34 теста rich-сообщений и справочных кнопок: типы Telegram entities, UTF-16 offsets после emoji, буквальные имена/причины, явные статусы и UTC, переходы справки, повторный тап, недоступное сообщение и отсутствие административных побочных эффектов. Сбой отправки ответа не повторяет уже применённое наказание. Telegram API в этих проверках заменён контролируемым адаптером; фактическая доставка в реальный чат не заявляется.
+
 ## Снимки работающей сборки
 
-Финальные screenshots получены через Chromium на собранном Nginx frontend (`localhost:8080`) с настоящими PostgreSQL и FastAPI. Проверены заголовок Astra, загрузка графики и отсутствие JavaScript-ошибок. На viewport 390×844 последнее быстрое действие заканчивается на y≈599 px, нижняя навигация начинается на y=764 px. После визуального просмотра фон навигации сделан непрозрачным, чтобы данные под ним не мешали чтению. Screenshot-сценарий после этого изменения повторно прошёл.
+Финальные screenshots получены через Chromium на собранном Nginx frontend (`localhost:8080`) с настоящими PostgreSQL и FastAPI. Проверены заголовок Astra, загрузка графики и отсутствие JavaScript-ошибок. Computed styles и Font Loading API подтвердили Onest в заголовках, Inter 300 в крупных показателях и JetBrains Mono в служебных подписях. На viewport 390×844 последнее быстрое действие заканчивается на y≈599 px, нижняя навигация начинается на y=764 px. После визуального просмотра фон навигации сделан непрозрачным, чтобы данные под ним не мешали чтению. Screenshot-сценарий после этого изменения повторно прошёл.
 
 [Вход desktop](screenshots/welcome-desktop.png) · [Вход mobile](screenshots/welcome-mobile.png) · [Dashboard desktop](screenshots/dashboard-desktop.png) · [Dashboard mobile](screenshots/dashboard-mobile.png) · [Нижняя навигация](screenshots/mobile-navigation.png).
 

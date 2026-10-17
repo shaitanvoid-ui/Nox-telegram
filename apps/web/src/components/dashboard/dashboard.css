@@ -32,8 +32,9 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.11em;
 }
 .nd-page-caption p > span {
@@ -47,7 +48,8 @@
 }
 .nd-kicker {
   color: #a5a3b2;
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   line-height: 1.5;
   font-weight: 500;
   letter-spacing: 0.13em;
@@ -92,7 +94,7 @@
   display: block;
   margin-bottom: 23px;
   color: #b8b6c6;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.15em;
 }
 .nd-hero h1 {
@@ -100,7 +102,7 @@
   font-size: clamp(47px, 5.5vw, 76px);
   font-weight: 500;
   line-height: 0.99;
-  letter-spacing: -0.065em;
+  letter-spacing: -0.04em;
 }
 .nd-community {
   margin: 16px 0 24px !important;
@@ -145,6 +147,7 @@
   right: 25px;
   bottom: 22px;
   color: #bdb7d9;
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.2em;
   writing-mode: vertical-rl;
@@ -181,11 +184,11 @@
 .nd-vital dd {
   margin: 11px 0 8px;
   color: #f4f3f7;
-  font-family: var(--font-display, "Inter", sans-serif);
+  font-family: var(--font-sans, "Inter", sans-serif);
   font-size: clamp(40px, 5.8vw, 66px);
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
 }
 .nd-vital-note {
@@ -285,14 +288,14 @@
 }
 .nd-section-heading .nd-kicker {
   margin-bottom: 8px;
-  font-size: 9px;
+  font-size: 11px;
 }
 .nd-section-heading h2 {
   font-family: var(--font-display, "Inter", sans-serif);
   font-size: 23px;
   font-weight: 500;
   line-height: 1.2;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
 }
 .nd-section-link {
   display: grid;
@@ -318,11 +321,12 @@
   font-size: 12px;
 }
 .nd-event-summary > strong {
-  font-family: var(--font-display, "Inter", sans-serif);
-  font-weight: 400;
+  font-family: var(--font-sans, "Inter", sans-serif);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
   font-size: 33px;
   line-height: 1;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.04em;
 }
 .nd-event-list {
   list-style: none;
@@ -498,6 +502,7 @@
   padding-top: 15px;
   border-top: 1px solid #ffffff0d;
   color: #645d70;
+  font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.12em;
 }
@@ -527,7 +532,7 @@
   font-size: 30px;
   line-height: 1.2;
   font-weight: 400;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.04em;
 }
 .nd-state > p:not(.nd-kicker) {
   max-width: 390px;

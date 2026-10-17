@@ -1,6 +1,6 @@
 # Зависимости и совместимость
 
-Основной стек проверен **2026-10-16**; Manrope 5.3.0 добавлен **2026-10-17** и зафиксирован в npm lockfile. Источники воспроизводимой установки — [`uv.lock`](../uv.lock) и [`apps/web/package-lock.json`](../apps/web/package-lock.json). Диапазоны в `pyproject.toml` описывают допустимое обновление, а фактические версии задаёт lockfile. Используйте `uv sync --frozen` и `npm ci --prefix apps/web`.
+Основной стек проверен **2026-10-16**; шрифты Onest 5.3.1, Inter 5.2.8 и JetBrains Mono 5.3.0 закреплены в npm lockfile **2026-10-17**. Источники воспроизводимой установки — [`uv.lock`](../uv.lock) и [`apps/web/package-lock.json`](../apps/web/package-lock.json). Диапазоны в `pyproject.toml` описывают допустимое обновление, а фактические версии задаёт lockfile. Используйте `uv sync --frozen` и `npm ci --prefix apps/web`.
 
 ## Зафиксированный стек
 
@@ -18,7 +18,7 @@
 | TanStack Query / React Router | 5.104.3 / 7.18.4 |
 | Telegram Mini Apps React SDK | `@tma.js/sdk-react` 3.0.23 |
 | Recharts / Lucide React | 3.10.1 / 1.58.0 |
-| Manrope / Inter (self-hosted Fontsource) | 5.3.0 / 5.2.8 |
+| Onest / Inter / JetBrains Mono (self-hosted Fontsource) | 5.3.1 / 5.2.8 / 5.3.0 |
 | Vitest / Playwright | 5.0.5 / 1.64.1 |
 | Pytest / Ruff / mypy | 9.1.1 / 0.15.22 / 1.20.2 |
 

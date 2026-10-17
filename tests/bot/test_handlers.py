@@ -6,12 +6,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 from aiogram import Bot
-from aiogram.exceptions import TelegramForbiddenError
-from aiogram.methods import BanChatMember
+from aiogram.exceptions import TelegramForbiddenError, TelegramNetworkError
+from aiogram.methods import AnswerCallbackQuery, BanChatMember, EditMessageText, SendMessage
 from aiogram.types import Update
 from aiogram.types import User as TelegramUser
 from nox.automation_runtime import execute_automation
 from nox.bot import build_dispatcher, onboard_chat
+from nox.bot_messages import help_message
 from nox.db import Base, Database
 from nox.models import (
     AnalyticsAggregate,
@@ -217,3 +218,124 @@ async def test_shield_counts_one_violation_for_multiple_policies_and_repeated_ed
         )
         assert aggregate.violations == 1
         assert aggregate.messages == 1
+
+
+async def test_help_message_sends_entities_and_a_working_navigation_menu(db: Database) -> None:
+    bot, _ = provider()
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(bot, command_update("/start"))
+    sent = bot.session.call_args.args[1]
+    assert "ASTRA" in sent.text
+    assert sent.entities and sent.parse_mode is None
+    assert sent.link_preview_options.is_disabled
+    assert sent.reply_markup.inline_keyboard[0][0].callback_data == "astra:help:moderation"
+    bot.get_chat_member.assert_not_awaited()
+    bot.ban_chat_member.assert_not_awaited()
+
+
+def help_callback(
+    data: str, text: str = "Предыдущая страница", *, inaccessible: bool = False
+) -> Update:
+    return Update.model_validate(
+        {
+            "update_id": 201,
+            "callback_query": {
+                "id": "help-callback",
+                "from": {"id": 20, "first_name": "Member", "is_bot": False},
+                "chat_instance": "test-group",
+                "data": data,
+                "message": {
+                    "message_id": 200,
+                    "date": 0 if inaccessible else 1730000000,
+                    "chat": {"id": -1001, "type": "supergroup", "title": "Astra"},
+                    "from": {"id": 999, "first_name": "Astra", "is_bot": True},
+                    "text": text,
+                },
+            },
+        }
+    )
+
+
+@pytest.mark.parametrize("page", ["home", "moderation", "setup"])
+async def test_help_callback_acknowledges_and_edits_only_public_reference(
+    db: Database, page: str
+) -> None:
+    bot, _ = provider()
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(bot, help_callback(f"astra:help:{page}"))
+    calls = [call.args[1] for call in bot.session.call_args_list]
+    assert len(calls) == 2
+    assert isinstance(calls[0], AnswerCallbackQuery)
+    assert isinstance(calls[1], EditMessageText)
+    assert calls[1].entities and calls[1].parse_mode is None
+    assert calls[1].link_preview_options.is_disabled
+    bot.get_chat_member.assert_not_awaited()
+    bot.ban_chat_member.assert_not_awaited()
+    async with db.sessions() as session:
+        assert await session.scalar(select(ModerationCase)) is None
+        assert await session.get(Chat, -1001) is None
+
+
+async def test_repeated_help_tap_is_acknowledged_without_redundant_edit(db: Database) -> None:
+    bot, _ = provider()
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(
+        bot, help_callback("astra:help:home", help_message().as_kwargs()["text"])
+    )
+    assert bot.session.call_count == 1
+    assert isinstance(bot.session.call_args.args[1], AnswerCallbackQuery)
+
+
+async def test_inaccessible_help_message_is_acknowledged_without_an_edit(db: Database) -> None:
+    bot, _ = provider()
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(bot, help_callback("astra:help:home", inaccessible=True))
+    assert bot.session.call_count == 1
+    assert isinstance(bot.session.call_args.args[1], AnswerCallbackQuery)
+
+
+async def test_unrecognized_callback_does_not_execute_any_action(db: Database) -> None:
+    bot, _ = provider()
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(bot, help_callback("astra:ban:20"))
+    bot.session.assert_not_called()
+    bot.ban_chat_member.assert_not_awaited()
+
+
+async def test_ambiguous_telegram_action_uses_review_message_without_success(db: Database) -> None:
+    bot, _ = provider()
+    bot.ban_chat_member.side_effect = TelegramNetworkError(
+        method=BanChatMember(chat_id=-1001, user_id=20), message="connection dropped"
+    )
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(bot, command_update("/ban <b>сомнительная</b> реклама"))
+    reply = bot.session.call_args.args[1]
+    assert "Результат требует проверки" in reply.text
+    assert "Не повторяйте действие автоматически" in reply.text
+    assert "Участник заблокирован" not in reply.text
+    assert "<b>сомнительная</b> реклама" in reply.text
+    assert reply.parse_mode is None and reply.entities
+    async with db.sessions() as session:
+        case = await session.scalar(select(ModerationCase))
+        assert case.status == "unknown"
+
+
+async def test_reply_failure_does_not_replay_committed_moderation(db: Database) -> None:
+    bot, _ = provider()
+    bot.session.side_effect = TelegramForbiddenError(
+        method=SendMessage(chat_id=-1001, text="test"), message="cannot send messages"
+    )
+    gateway = TelegramGateway(bot)
+    dispatcher = build_dispatcher(db, ModerationService(db, gateway), gateway, ShieldEngine(None))
+    await dispatcher.feed_update(bot, command_update("/ban повторная реклама"))
+    await dispatcher.feed_update(bot, command_update("/ban повторная реклама"))
+    bot.ban_chat_member.assert_awaited_once()
+    async with db.sessions() as session:
+        cases = (await session.scalars(select(ModerationCase))).all()
+        assert len(cases) == 1 and cases[0].status == "applied"

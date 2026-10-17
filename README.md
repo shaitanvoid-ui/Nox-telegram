@@ -1,36 +1,78 @@
-# Astra
+<p align="center">
+  <img src="docs/assets/astra-cover.svg" alt="Astra — пространство вашего сообщества" width="100%">
+</p>
 
-**Next Generation Telegram Moderation & Community Management Platform**
+<p align="center">
+  <strong>Модерация. Защита. Автоматизация.</strong><br>
+  Telegram-бот и Mini App с единым backend управления сообществом.
+</p>
 
-Astra — платформа управления Telegram-сообществами: общий backend модерации, Aiogram-бот и адаптивный Mini App с собственной тёмной дизайн-системой. Первая версия строится как модульный монолит, чтобы проверять реальные сценарии без лишних микросервисов.
+<p align="center">
+  <a href="https://github.com/shaitanvoid-ui/Nox-telegram/actions/workflows/ci.yml"><img src="https://github.com/shaitanvoid-ui/Nox-telegram/actions/workflows/ci.yml/badge.svg" alt="GitHub Actions — проверки проекта"></a>
+  <a href="apps/web/package.json"><img src="https://img.shields.io/badge/React-19-17151f?style=flat&labelColor=25212f&color=8571d6" alt="React 19"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.12-17151f?style=flat&labelColor=25212f&color=8571d6" alt="Python 3.12"></a>
+  <a href="docs/deployment.md"><img src="https://img.shields.io/badge/Docker-Compose-17151f?style=flat&labelColor=25212f&color=8571d6" alt="Docker Compose"></a>
+</p>
 
-Это начальная версия продукта, а не завершение всех возможностей master prompt. Без настоящего токена доступна явно обозначенная локальная демонстрация с работающими API и БД. Telegram при этом не подключён. Production-готовность и фактические запуски проверок описываются отдельно в [docs/qa.md](docs/qa.md).
+<p align="center">
+  <a href="#быстрый-запуск">Запустить</a> ·
+  <a href="#возможности">Возможности</a> ·
+  <a href="#подключение-telegram">Подключить бота</a> ·
+  <a href="docs/qa.md">Результаты проверок</a> ·
+  <a href="#документация">Документация</a>
+</p>
 
-Название продукта и бота — **Astra**. Техническое имя репозитория `nox-telegram`, Python-пакет `nox`, пути и префикс переменных окружения `NOX_` сохранены для совместимости с существующими конфигурациями.
+---
 
-## Что входит в основу
+**Astra** объединяет действия модераторов, защитные фильтры, историю событий и сценарии автоматизации в одном пространстве. React Mini App и Aiogram-бот используют общие сервисы: изменение из интерфейса и команда в Telegram проходят одинаковые проверки прав и записываются в аудит.
 
-| Область | Возможности и границы |
+> **Статус: работающая основа продукта, локальный demo.** API и база данных настоящие; начальные участники, чат и события — синтетические. Telegram в demo заменён mock-адаптером. Реальный бот, Telegram Android/iOS и production требуют отдельного подключения и приёмки. Точные результаты и границы готовности — в [отчёте QA](docs/qa.md).
+
+## Интерфейс
+
+Чёрные и графитовые поверхности, скульптурная графика, мягкие световые акценты и крупная кириллическая типографика. Заголовки — **Onest**, интерфейс — **Inter**, технические подписи — **JetBrains Mono**. Шрифты и графика загружаются локально.
+
+<p align="center">
+  <img src="docs/screenshots/welcome-desktop.png" alt="Astra: входной экран в браузере" width="100%">
+</p>
+
+<table>
+  <tr>
+    <th width="50%">Вход в Mini App</th>
+    <th width="50%">Панель сообщества</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/welcome-mobile.png" alt="Мобильный вход Astra" width="300"></td>
+    <td align="center"><img src="docs/screenshots/dashboard-mobile.png" alt="Мобильный Dashboard Astra: модули защиты, активность и быстрые действия" width="300"></td>
+  </tr>
+</table>
+
+<details>
+<summary><strong>Открыть Dashboard на desktop</strong></summary>
+
+![Рабочая панель Astra на desktop](docs/screenshots/dashboard-desktop.png)
+
+</details>
+
+Скриншоты показывают локальную демонстрацию с настоящими API и SQL-базой. Интерфейс учитывает safe areas, нижнюю навигацию и reduced motion. Сообщения и нарушения имеют отдельные шкалы, график — текстовую альтернативу. Количество включённых модулей Shield показывает конфигурацию, а не оценку безопасности сообщества. [Дизайн-бриф →](docs/design/reference-redesign.md)
+
+## Возможности
+
+| | Что реализовано |
 | --- | --- |
-| Mini App | Dashboard, Moderation, Shield, Intelligence, Studio, Analytics, Settings; адаптивная навигация и состояния API |
-| Модерация | Warn/unwarn, ban/unban, mute/unmute, kick, причины, история, отмена, временные ограничения и эскалация предупреждений |
-| Безопасность | Проверка подписанных Telegram `initData`, срок действия, replay guard, серверные сессии с хешем токена, chat-scoped RBAC |
-| Постоянные данные | SQLAlchemy, Alembic, PostgreSQL; SQLite для лёгкого demo и тестов |
-| Telegram | Aiogram handlers, `/setup`, команды ответом на сообщение, webhook/polling ingestion и устойчивая очередь updates |
-| Shield | Детерминированные фильтры частоты, повторов, ссылок, упоминаний и сигналы для ручной проверки; возможности каждого модуля сверяйте с `docs/bot.md` |
-| API | Списки чатов и участников, дела, апелляции, настройки, защита, аудит и аналитика; актуальные маршруты в OpenAPI |
-| Studio | Хранение правил, preview, история выполнения и исполнитель: вступление → приветствие, флуд → удаление/мут, предупреждения → мут |
-| Инфраструктура | Docker Compose, PostgreSQL, Redis, отдельный worker, Nginx, production-пример Caddy и GitHub Actions |
+| **Модерация** | Warn/unwarn, ban/unban, mute/unmute и kick; причины, история, отмена, временные ограничения и эскалация предупреждений. |
+| **Shield** | Фильтры частоты, повторов, ссылок и упоминаний; настраиваемые модули и журнал. Остальные сигналы направляются на ручную проверку — [границы модулей](docs/bot.md). |
+| **Studio** | Правила, preview без побочных эффектов и история выполнения. Вступление → приветствие, флуд → удаление/мут, предупреждения → мут. |
+| **Управление** | Выбор чата, участники, роли, дела, апелляции, настройки, аудит и аналитика через REST API. |
+| **Telegram** | Rich-сообщения Aiogram 3, рабочая inline-справка, onboarding `/setup`, команды ответом на сообщение, webhook/polling и постоянная очередь updates. |
+| **Безопасность** | Проверка подписи и срока `initData`, защита обмена от replay, хешированные серверные сессии, chat-scoped RBAC и проверка прав Telegram. |
+| **Надёжность** | Дедупликация updates, транзакции, блокировки конкурентных операций, миграции и журнал неоднозначных результатов Telegram. |
 
-AI-provider по умолчанию отключён. Экран Intelligence не означает подключённую модель. Полная защита от рейдов, автоматическое восстановление Emergency Mode, планировщик и дополнительные действия Studio, а также Universe требуют дальнейшего развития. Наличие настроек, API или визуального редактора само по себе не подтверждает исполнение всех сценариев.
-
-## Дизайн Mini App
-
-Фронтенд пересобран по новым визуальным референсам: чёрные и графитовые поверхности, хромированная скульптурная графика, белые округлые кнопки, типографика Manrope и Inter. Новые оболочка, навигация и рабочие разделы используют существующее API. Количество включённых модулей Shield остаётся фактом конфигурации, а не оценкой безопасности. Графики сообщений и нарушений имеют отдельные шкалы и текстовую альтернативу. [Дизайн-бриф](docs/design/reference-redesign.md), [desktop](docs/screenshots/dashboard-desktop.png), [mobile](docs/screenshots/dashboard-mobile.png).
+**Следующие этапы:** AI-provider и контекстная модерация, полноценный Anti-Raid и Emergency Mode с восстановлением настроек, планировщик Studio, Universe и экономика. Intelligence сейчас показывает эвристические сигналы для ручного разбора; подключённой AI-модели нет. Поддерживаемые настройки не означают исполнение всех будущих сценариев. [План развития →](docs/roadmap.md)
 
 ## Быстрый запуск
 
-Нужны Docker и Docker Compose v2:
+Нужны **Docker** и **Docker Compose v2**. Токен бота для локального demo не требуется.
 
 ```bash
 cp .env.example .env
@@ -38,22 +80,58 @@ docker compose up -d --build
 docker compose ps
 ```
 
-- Mini App в браузере: **http://localhost:8080**.
-- API: **http://localhost:8000**.
-- Swagger UI: **http://localhost:8000/docs**.
+| Адрес | Что открыть |
+| --- | --- |
+| **http://localhost:8080** | Mini App → «Открыть демо-пространство» |
+| http://localhost:8000/docs | Интерактивная документация API |
+| http://localhost:8000/ready | Готовность API и подключений |
 
-В demo-режиме API применяет миграции и создаёт синтетический чат с участниками и историей. Демо-вход выдаёт настоящую серверную сессию; формы обращаются к FastAPI и сохраняют изменения в БД. Telegram adapter работает как явно выделенный mock и не наказывает настоящих пользователей. Не публикуйте этот режим в интернет.
+При первом запуске API применяет миграции и создаёт демонстрационный чат. Демо-вход выдаёт настоящую серверную сессию; формы обращаются к FastAPI и сохраняют изменения в PostgreSQL. Mock-адаптер не выполняет наказания в настоящем Telegram. **Не используйте demo-режим для реальных чатов или постоянного публичного сервиса.**
 
 ```bash
 docker compose logs --tail=100 api worker web
 docker compose down
 ```
 
-`down` сохраняет именованные volumes. `down -v` удаляет постоянные данные: его нельзя использовать как обычный способ обновления.
+Обычный `down` сохраняет именованные volumes. **`down -v` удаляет постоянные данные** и не подходит для обычного обновления.
+
+## Подключение Telegram
+
+1. Создайте отдельного тестового бота через официальный **@BotFather**. Передайте токен через секрет-хранилище или локальный `.env`: `NOX_BOT_TOKEN`. Не помещайте его в исходники, issue, PR или screenshots.
+2. Подготовьте HTTPS-домен. Установите `NOX_MODE=production`, отдельные PostgreSQL и Redis, точные HTTPS CORS origin и случайный `NOX_WEBHOOK_SECRET` минимум 32 символа. Demo-вход в production отключён.
+3. Укажите HTTPS URL Mini App/menu button в BotFather. Сервер проверяет подписанные Telegram `initData`; идентификаторы и роли из интерфейса не считаются доказательством полномочий.
+4. Настройте webhook с secret token. Для локальной разработки с настоящим ботом доступен polling; одновременно с webhook его не запускают.
+5. Добавьте бота в свою тестовую супергруппу с необходимыми правами. Выполните `/setup` от личного профиля администратора, затем проверьте `/warn причина` и `/mute 30m причина` ответом на сообщение тестового участника.
+
+**[Пошаговая настройка бота →](docs/bot.md)** · [Примеры сообщений Astra →](docs/bot-messages.md) · [Production, HTTPS и секреты →](docs/deployment.md)
+
+## Архитектура и стек
+
+Модульный монолит: один набор бизнес-правил, два пользовательских входа — API и Telegram. PostgreSQL хранит постоянные данные; Redis обслуживает краткоживущие ограничения и счётчики. Отдельный worker обрабатывает очередь и фоновые задачи.
+
+| Слой | Технологии |
+| --- | --- |
+| Mini App | React, строгий TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, Telegram Mini Apps SDK, Lucide, Recharts |
+| Backend | Python, FastAPI, Pydantic, async SQLAlchemy, asyncpg, Alembic, Aiogram 3, Redis |
+| Инфраструктура | Docker Compose, Nginx, production-пример Caddy, GitHub Actions |
+| Проверки | Pytest, Ruff, mypy, Vitest, Testing Library, Playwright |
+
+```text
+apps/web/           Mini App, компоненты и браузерные тесты
+backend/nox/        API, сервисы, безопасность, Telegram, Shield, worker
+backend/migrations/ Миграции PostgreSQL и SQLite
+tests/              Unit, API, bot и интеграционные проверки
+infra/              Контейнеры, Nginx и production HTTPS
+scripts/            Запуск, backup и воспроизводимые измерения
+docs/               API, бот, эксплуатация и результаты проверок
+.github/            CI, issue templates и pull request template
+```
+
+Зависимости зафиксированы в `uv.lock` и `apps/web/package-lock.json`. Rust не добавлен без измеренного CPU-узкого места. [Архитектурные решения →](ARCHITECTURE.md)
 
 ## Разработка на хосте
 
-Требования: Python 3.12/3.13, uv, Node.js 22.12+ и npm; рекомендуется Node.js 24, как в CI. Зависимости фиксируются `uv.lock` и `apps/web/package-lock.json`.
+Требования: **Python 3.12/3.13, uv, Node.js 22.12+ и npm**. Рекомендуется Node.js 24, как в CI.
 
 ```bash
 cp .env.example .env
@@ -74,19 +152,9 @@ uv run uvicorn nox.main:app --host 127.0.0.1 --port 8000 --reload
 npm run dev --prefix apps/web -- --host 127.0.0.1
 ```
 
-Откройте `http://localhost:5173`. URL в `.env.example` использует имена сервисов Docker; `export` выше заменяет их на localhost для запуска Python на хосте. `nox-local` — только локальный пароль. Для облегчённого demo доступен `NOX_DATABASE_URL=sqlite+aiosqlite:///./nox-demo.db`.
+Откройте **http://localhost:5173**. URL в `.env.example` использует имена сервисов Docker; `export` выше заменяет их на localhost для Python на хосте. `nox-local` — только локальный пароль.
 
-Worker запускается с тем же окружением командой `uv run python -m nox.worker`. Подробности разработки, миграций, диагностики и SQLite: [docs/development.md](docs/development.md).
-
-## Подключение Telegram
-
-1. Создайте отдельного тестового бота через официальный **@BotFather** и сохраните токен в секрет-хранилище или локальном `.env`. Не отправляйте его в issue, PR, исходный код или screenshots.
-2. Подготовьте HTTPS-домен Mini App и установите `NOX_MODE=production`, PostgreSQL, Redis, точные HTTPS CORS origin и случайный `NOX_WEBHOOK_SECRET` минимум 32 символа. Demo-вход в production недоступен.
-3. Настройте Mini App/menu button в BotFather на свой HTTPS URL. При открытии внутри Telegram клиент передаёт подписанные `initData` на сервер; пользователь и роли не принимаются на доверие из интерфейса.
-4. Настройте webhook с secret token. Для разработки с настоящим ботом можно выбрать polling, но не запускать его одновременно с webhook.
-5. Добавьте бота в собственную тестовую супергруппу, предоставьте необходимые административные права и выполните `/setup` от личного профиля администратора. Проверьте `/warn причина` и `/mute 30m причина` ответом на сообщение тестового участника.
-
-Пошаговая настройка, поддерживаемые команды и ограничения Telegram: [docs/bot.md](docs/bot.md). Реальный Bot API и клиенты Android/iOS требуют отдельной проверки после появления токена и домена.
+Worker с тем же окружением: `uv run python -m nox.worker`. Для облегчённого demo доступна SQLite: `NOX_DATABASE_URL=sqlite+aiosqlite:///./nox-demo.db`. Создание миграций, диагностика и другие варианты запуска — в [руководстве разработчика](docs/development.md).
 
 ## Проверки качества
 
@@ -95,15 +163,14 @@ uv run ruff format --check backend tests scripts
 uv run ruff check backend tests scripts
 uv run mypy backend/nox
 uv run pytest tests -q
+npm run format:check --prefix apps/web
 npm run lint --prefix apps/web
 npm run typecheck --prefix apps/web
 npm test --prefix apps/web
 npm run build --prefix apps/web
 ```
 
-Для полного запуска интеграционных проверок задайте `NOX_TEST_POSTGRES_URL` на отдельную тестовую PostgreSQL-базу и `NOX_TEST_REDIS_URL` на отдельную Redis DB. Без них соответствующие проверки конкуренции и replay guard явно пропускаются. Подготовка: [docs/development.md](docs/development.md#проверки).
-
-Playwright и браузерные проверки:
+Для полного интеграционного прогона задайте `NOX_TEST_POSTGRES_URL` на отдельную тестовую PostgreSQL-базу и `NOX_TEST_REDIS_URL` на отдельную Redis DB. Без них проверки конкуренции и replay guard явно пропускаются. [Подготовка тестовых сервисов →](docs/development.md#проверки)
 
 ```bash
 cd apps/web
@@ -111,38 +178,19 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-GitHub Actions описывает backend, frontend, E2E и Docker jobs без production-секретов. Workflow считается проверенным на GitHub только после реального remote push и завершённого запуска. Команды и зафиксированные результаты, пропуски, screenshots и измерения производительности: **[docs/qa.md](docs/qa.md)**.
+[GitHub Actions](https://github.com/shaitanvoid-ui/Nox-telegram/actions/workflows/ci.yml) проверяет backend, frontend, E2E и сборку/запуск контейнеров без production-секретов. Даты прогонов, результаты, пропуски, screenshots и реальные измерения производительности собраны в **[отчёте QA](docs/qa.md)**. Автоматической публикации в production нет.
 
-## Технологии и устройство
+## Документация
 
-Frontend: React, строгий TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, Telegram Mini Apps SDK, Lucide и Recharts. Backend: Python, FastAPI, Pydantic, async SQLAlchemy, asyncpg, Alembic, Aiogram 3 и Redis. Инфраструктура: Docker Compose, Nginx, Caddy, GitHub Actions; проверки — Pytest, Ruff, mypy, Vitest, Testing Library и Playwright.
+| Начать | Развивать | Эксплуатировать |
+| --- | --- | --- |
+| [Telegram-бот](docs/bot.md) | [Архитектура](ARCHITECTURE.md) | [Развёртывание и обновление](docs/deployment.md) |
+| [API и OpenAPI](docs/api.md) | [Локальная разработка и миграции](docs/development.md) | [Безопасность](SECURITY.md) |
+| [Результаты проверок](docs/qa.md) | [Вклад в разработку](CONTRIBUTING.md) | [Backup и восстановление](docs/deployment.md#резервное-копирование) |
+| [План развития](docs/roadmap.md) | [Зависимости](docs/dependencies.md) | [История изменений](CHANGELOG.md) |
 
-```text
-apps/web/           React Mini App и браузерные тесты
-backend/nox/        API, сервисы, безопасность, Telegram, Shield и worker
-tests/              Unit, bot и интеграционные проверки
-backend/migrations/ Миграции PostgreSQL/SQLite
-infra/              Dockerfiles, Nginx и production HTTPS
-scripts/            Запуск, backup и воспроизводимые измерения
-docs/               Запуск, API, бот, эксплуатация и результаты проверки
-.github/            CI, issue templates и pull request template
-```
+Для production нужны отдельные секреты и БД, управляемые миграции и проверенное восстановление backup. Пример `infra/compose.production.yml` требует **Compose 2.24.4+** и публикует только Caddy. Перед реальным использованием отдельно проверяются Telegram-клиенты, реальные полномочия и поведение Bot API.
 
-Общая бизнес-логика модерации используется API и Telegram-командами. В production PostgreSQL хранит постоянные данные; Redis обслуживает краткоживущие ограничения. Rust не добавлен без измеренного CPU-узкого места. Подробнее: [ARCHITECTURE.md](ARCHITECTURE.md).
+---
 
-## Эксплуатация и документация
-
-- [Локальная разработка и миграции](docs/development.md).
-- [API и OpenAPI](docs/api.md).
-- [Telegram-бот](docs/bot.md).
-- [Production, HTTPS, backup, восстановление и обновление](docs/deployment.md).
-- [Безопасность и сообщение об уязвимости](SECURITY.md).
-- [Вклад в разработку](CONTRIBUTING.md).
-- [История изменений](CHANGELOG.md).
-- [Дальнейшее развитие](docs/roadmap.md).
-
-Для production используйте отдельные секреты и БД, применяйте миграции управляемо и проверяйте восстановление backup. Пример `infra/compose.production.yml` требует Compose 2.24.4+ и публикует только Caddy; автоматическая публикация на production не включена.
-
-Приватный репозиторий владельца: [shaitanvoid-ui/Nox-telegram](https://github.com/shaitanvoid-ui/Nox-telegram). Исходники отправляются логическими коммитами; проверенные результаты последнего выпуска и CI указаны в [docs/qa.md](docs/qa.md).
-
-Лицензия пока не выбрана владельцем, поэтому `LICENSE` отсутствует. До выбора лицензии права сохраняются за правообладателем; лицензии сторонних зависимостей действуют отдельно.
+<sub>Продукт называется <strong>Astra</strong>. Имя репозитория <code>Nox-telegram</code>, Python-пакет <code>nox</code> и префикс <code>NOX_</code> сохранены для совместимости. Репозиторий приватный. Лицензия владельцем ещё не выбрана; отсутствие <code>LICENSE</code> не разрешает свободное распространение. Лицензии сторонних зависимостей действуют отдельно.</sub>

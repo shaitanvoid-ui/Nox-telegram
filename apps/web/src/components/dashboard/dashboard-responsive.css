@@ -30,7 +30,7 @@
     margin-bottom: 15px;
   }
   .nd-page-caption p {
-    font-size: 9px;
+    font-size: 11px;
     letter-spacing: 0.09em;
   }
   .nd-page-caption time {
@@ -45,13 +45,13 @@
     padding: 25px 23px;
   }
   .nd-hero-copy .nd-kicker {
-    font-size: 8px;
+    font-size: 11px;
     letter-spacing: 0.11em;
     margin-bottom: 21px;
   }
   .nd-hero h1 {
     font-size: clamp(39px, 10.6vw, 57px);
-    letter-spacing: -0.06em;
+    letter-spacing: -0.04em;
   }
   .nd-hero-art img {
     object-position: 59% center;
@@ -146,7 +146,7 @@
     margin-bottom: 23px;
   }
   .nd-section-heading .nd-kicker {
-    font-size: 8px;
+    font-size: 11px;
     margin-bottom: 8px;
   }
   .nd-section-heading h2 {
@@ -251,7 +251,7 @@
     max-width: 88%;
   }
   .nd-hero-copy .nd-kicker {
-    font-size: 7px;
+    font-size: 11px;
   }
   .nd-hero h1 {
     font-size: 38px;
