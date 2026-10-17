@@ -26,7 +26,7 @@ async def seed_demo(db: Database) -> None:
         if await session.get(Chat, DEMO_CHAT_ID):
             return
         people = [
-            (1001, "Александр", "alex_nox", "owner"),
+            (1001, "Александр", "alex_astra", "owner"),
             (1002, "Мария", "maria_studio", "admin"),
             (1003, "Даниил", "dan_dev", "moderator"),
             (1004, "Виктор", "victor_design", "member"),
@@ -38,7 +38,7 @@ async def seed_demo(db: Database) -> None:
         session.add(
             Chat(
                 id=DEMO_CHAT_ID,
-                title="NOX Community",
+                title="Astra Community",
                 member_count=8247,
                 welcome_message="Добро пожаловать! Здесь мы создаём будущее.",
                 warn_limit=3,
@@ -160,7 +160,7 @@ async def main() -> None:
         async with db.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
         await seed_demo(db)
-        print("NOX synthetic demo ready. No Telegram API connection.")
+        print("Astra synthetic demo ready. No Telegram API connection.")
     finally:
         await db.close()
 

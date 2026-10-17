@@ -9,11 +9,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
-  ArrowRight,
   BarChart3,
   ChevronDown,
-  CircleHelp,
-  Command,
+  Ellipsis,
   FlaskConical,
   LayoutDashboard,
   LogOut,
@@ -23,22 +21,22 @@ import {
   ShieldCheck,
   Sparkles,
   Workflow,
-  X,
 } from "lucide-react";
-import { api, getHealth } from "./api";
+import { api } from "./api";
 import { useAuth } from "./auth";
 import {
   Avatar,
-  Badge,
   Button,
   Empty,
   ErrorState,
   Loading,
   Logo,
+  Modal,
 } from "./components/ui";
 import { WorkspaceContext } from "./workspace";
 import type { Chat } from "./types";
 import { syncBackButton } from "./telegram";
+import { Welcome } from "./pages/Welcome";
 import { DashboardPage } from "./pages/Dashboard";
 import { ModerationPage } from "./pages/Moderation";
 import { ShieldPage } from "./pages/Shield";
@@ -46,120 +44,33 @@ import { StudioPage } from "./pages/Studio";
 import { AnalyticsPage } from "./pages/Analytics";
 import { SettingsPage } from "./pages/Settings";
 import { IntelligencePage, AppealsPage } from "./pages/Reviews";
-const nav = [
+
+const navigation = [
   { path: "/", label: "Обзор", icon: LayoutDashboard },
   { path: "/moderation", label: "Модерация", icon: ShieldCheck },
-  { path: "/shield", label: "NOX Shield", icon: Activity },
+  { path: "/shield", label: "Astra Shield", icon: Activity },
   { path: "/intelligence", label: "Intelligence", icon: Sparkles },
   { path: "/studio", label: "Studio", icon: Workflow },
   { path: "/analytics", label: "Аналитика", icon: BarChart3 },
   { path: "/appeals", label: "Апелляции", icon: MessageSquare },
   { path: "/settings", label: "Настройки", icon: Settings2 },
 ];
-function Welcome() {
-  const { loading, error, loginDemo } = useAuth();
-  const health = useQuery({
-    queryKey: ["health"],
-    queryFn: getHealth,
-    retry: 1,
-  });
-  return (
-    <div className="welcome">
-      <div className="welcome-grid" />
-      <div className="welcome-header">
-        <Logo />
-        <Badge tone="violet">FIRST RELEASE / 0.1</Badge>
-      </div>
-      <main className="welcome-content">
-        <div className="welcome-orbit">
-          <div className="orbit-ring one" />
-          <div className="orbit-ring two" />
-          <ShieldCheck size={48} strokeWidth={1.2} />
-          <span className="orbit-dot" />
-        </div>
-        <div className="eyebrow">YOUR COMMUNITY. UNDER CONTROL.</div>
-        <h1>
-          Новое измерение
-          <br />
-          <span>вашего сообщества.</span>
-        </h1>
-        <p>
-          Модерация, защита и автоматизация Telegram.
-          <br />В одном спокойном, продуманном пространстве.
-        </p>
-        {health.isPending ? (
-          <div className="welcome-hint" role="status">
-            Подключаемся к NOX…
-          </div>
-        ) : health.isError ? (
-          <div className="welcome-error">
-            <ErrorState
-              error={health.error}
-              retry={() => void health.refetch()}
-            />
-          </div>
-        ) : health.data.mode === "demo" ? (
-          <>
-            <Button loading={loading} onClick={() => void loginDemo()}>
-              Открыть демо-пространство
-              <ArrowRight size={18} />
-            </Button>
-            <div className="welcome-hint">
-              <FlaskConical size={14} />
-              Изолированные демонстрационные данные · настоящий API
-            </div>
-          </>
-        ) : (
-          <div className="telegram-entry">
-            <ShieldCheck size={20} />
-            <strong>
-              {loading
-                ? "Проверяем подпись Telegram…"
-                : "Войдите через Telegram"}
-            </strong>
-            <span>
-              Откройте Mini App из меню NOX-бота. Для обновления истёкшей сессии
-              закройте приложение и откройте его заново.
-            </span>
-          </div>
-        )}
-        {error && (
-          <div className="welcome-error">
-            <ErrorState error={error} />
-          </div>
-        )}
-        <div className="welcome-features">
-          <span>
-            <ShieldCheck size={17} />
-            Многоуровневая защита
-          </span>
-          <span>
-            <Workflow size={17} />
-            Умные сценарии
-          </span>
-          <span>
-            <BarChart3 size={17} />
-            Понятная аналитика
-          </span>
-        </div>
-      </main>
-      <footer className="welcome-footer">
-        <span>NOX COMMUNITY OS</span>
-        <span>
-          Для входа в рабочий чат откройте Mini App через бота в Telegram.
-        </span>
-      </footer>
-    </div>
-  );
-}
+const roleNames: Record<string, string> = {
+  owner: "Владелец",
+  admin: "Администратор",
+  moderator: "Модератор",
+  member: "Участник",
+};
+
 export default function App() {
   const { session } = useAuth();
   return session ? <WorkspaceShell /> : <Welcome />;
 }
+
 function WorkspaceShell() {
   const { session, logout } = useAuth();
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
-  const [menu, setMenu] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const chats = useQuery({
@@ -167,129 +78,145 @@ function WorkspaceShell() {
     queryFn: () => api<Chat[]>("/chats", session!.access_token),
   });
   const chat =
-    chats.data?.find((c) => c.id === selectedChat) ?? chats.data?.[0];
+    chats.data?.find((item) => item.id === selectedChat) ?? chats.data?.[0];
+  const active =
+    navigation.find((item) => item.path === location.pathname) ?? navigation[0];
   useEffect(
-    () => syncBackButton(location.pathname !== "/", () => navigate("/")),
-    [location.pathname, navigate],
+    () =>
+      syncBackButton(menuOpen || location.pathname !== "/", () => {
+        if (menuOpen) setMenuOpen(false);
+        else navigate("/");
+      }),
+    [location.pathname, menuOpen, navigate],
   );
   if (!session) return null;
-  const active = nav.find((item) => item.path === location.pathname) ?? nav[0];
-  const closeMenu = () => setMenu(false);
-  const links = nav.map((item) => (
+  const role = chat ? (roleNames[chat.role] ?? chat.role) : "Astra";
+  const links = navigation.map((item, index) => (
     <NavLink
       key={item.path}
       to={item.path}
       end={item.path === "/"}
-      className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-      onClick={closeMenu}
+      className={({ isActive }) =>
+        `nox-nav-link${isActive ? " is-active" : ""}`
+      }
+      onClick={() => setMenuOpen(false)}
     >
-      <item.icon size={19} strokeWidth={1.7} />
+      <item.icon size={19} strokeWidth={1.65} aria-hidden="true" />
       <span>{item.label}</span>
-      {item.path === "/intelligence" && <span className="nav-beta">AI</span>}
+      <span className="nox-nav-index" aria-hidden="true">
+        0{index + 1}
+      </span>
     </NavLink>
   ));
+  const chatPicker = (mobile = false) => (
+    <div
+      className={`nox-chat-picker${mobile ? " nox-chat-picker-mobile" : ""}`}
+    >
+      {!mobile && (
+        <span className="nox-chat-avatar" aria-hidden="true">
+          {chat?.title.slice(0, 1) ?? "N"}
+        </span>
+      )}
+      <select
+        aria-label={mobile ? "Текущий чат" : "Выбрать сообщество"}
+        value={chat?.id ?? ""}
+        disabled={!chats.data?.length}
+        onChange={(event) => setSelectedChat(Number(event.target.value))}
+      >
+        {!chats.data?.length && <option value="">Ваши сообщества</option>}
+        {chats.data?.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.title}
+          </option>
+        ))}
+      </select>
+      <ChevronDown size={14} aria-hidden="true" />
+    </div>
+  );
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <Logo />
-        <div className="workspace-label">РАБОЧЕЕ ПРОСТРАНСТВО</div>
-        <div className="sidebar-chat">
-          <span className="chat-mark">{chat?.title.slice(0, 1) ?? "N"}</span>
-          <div>
-            <strong>{chat?.title ?? "Ваши сообщества"}</strong>
-            <span>Telegram community</span>
-          </div>
-          <ChevronDown size={15} />
-          <select
-            aria-label="Выбрать сообщество"
-            value={chat?.id ?? ""}
-            onChange={(e) => setSelectedChat(Number(e.target.value))}
-          >
-            {chats.data?.map((c) => (
-              <option value={c.id} key={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
+    <div className="nox-shell">
+      <aside className="nox-sidebar">
+        <NavLink
+          to="/"
+          className="nox-brand-link"
+          aria-label="Astra — на главную"
+        >
+          <Logo />
+        </NavLink>
+        <div className="nox-workspace-caption">
+          WORKSPACE <span>/ 01</span>
         </div>
-        <nav className="desktop-nav" aria-label="Основная навигация">
+        {chatPicker()}
+        <nav className="nox-desktop-nav" aria-label="Основная навигация">
           {links}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <div>
-              <Command size={20} />
-              <span>
-                Меньше рутины.
-                <br />
-                <strong>Больше сообщества.</strong>
-              </span>
-            </div>
-            <button onClick={() => navigate("/studio")}>
-              Создать автоматизацию
-              <ArrowRight size={15} />
-            </button>
-          </div>
-          <button className="profile" onClick={logout} title="Завершить сессию">
+        <div className="nox-sidebar-account">
+          <div className="nox-account-identity">
             <Avatar name={session.user.first_name} />
             <span>
               <strong>{session.user.first_name}</strong>
               <small>
-                {session.mode === "demo"
-                  ? "Демо-администратор"
-                  : (chat?.role ?? "Участник")}
+                {session.mode === "demo" ? "Демо-администратор" : role}
               </small>
             </span>
-            <LogOut size={17} />
-          </button>
-          <div className="sidebar-version">
-            <span>NOX v0.1.0</span>
-            <span className="tiny-dot green" />
-            {chats.isSuccess ? "API подключён" : "Подключение"}
+            <button
+              type="button"
+              className="nox-logout"
+              aria-label="Завершить сессию"
+              onClick={() => void logout()}
+            >
+              <LogOut size={17} />
+            </button>
+          </div>
+          <div className="nox-build">
+            <span>ASTRA / 0.1</span>
+            <span>
+              <i className={chats.isSuccess ? "is-online" : ""} />
+              {chats.isSuccess ? "API подключён" : "Подключение"}
+            </span>
           </div>
         </div>
       </aside>
-      <div className="workspace">
-        <header className="topbar">
-          <div className="breadcrumbs">
-            <span className="desktop-only">Рабочее пространство</span>
-            <span className="desktop-only separator">/</span>
-            <active.icon size={16} />
-            <span>{active.label}</span>
+      <div className="nox-workspace">
+        <header className="nox-topbar">
+          <div className="nox-desktop-heading">
+            <span>ПРОСТРАНСТВО</span>
+            <i />
+            {active.label}
           </div>
-          <div className="topbar-right">
-            <div className="connection">
-              <span className="tiny-dot green" />
-              {session.mode === "demo" ? "Демо-режим" : "Telegram"}
-            </div>
-            <span className="topbar-line" />
-            <Badge tone="muted">
-              {chat?.role === "owner"
-                ? "Владелец"
-                : chat?.role === "admin"
-                  ? "Администратор"
-                  : (chat?.role ?? "NOX")}
-            </Badge>
-            <button
-              className="icon-button mobile-only"
-              aria-label="Открыть меню"
-              onClick={() => setMenu(true)}
-            >
-              <Menu size={21} />
-            </button>
+          <NavLink
+            to="/"
+            className="nox-mobile-brand"
+            aria-label="Astra — на главную"
+          >
+            <Logo compact />
+          </NavLink>
+          <div className="nox-mobile-chat">{chatPicker(true)}</div>
+          <div className="nox-topbar-status">
+            <span className="nox-live-dot" />
+            {session.mode === "demo" ? "SANDBOX" : "TELEGRAM"}
+            <span className="nox-topbar-role">{role}</span>
           </div>
+          <button
+            type="button"
+            className="nox-mobile-menu-button"
+            aria-label="Открыть меню"
+            aria-expanded={menuOpen}
+            aria-haspopup="dialog"
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu size={21} />
+          </button>
         </header>
         {session.mode === "demo" && (
-          <div className="demo-banner">
-            <FlaskConical size={14} />
+          <div className="nox-demo-disclosure">
+            <FlaskConical size={13} aria-hidden="true" />
             <span>
-              Демонстрационное пространство. Все изменения сохраняются в
-              тестовой базе; Telegram не подключён.
+              <strong>Демо.</strong> Тестовые данные · Telegram не подключён.
             </span>
-            <span className="demo-label">SANDBOX</span>
           </div>
         )}
-        <main className="main-content">
+        <main className="nox-main">
           {chats.isPending ? (
             <Loading />
           ) : chats.isError ? (
@@ -300,27 +227,13 @@ function WorkspaceShell() {
           ) : !chat ? (
             <Empty
               title="Пока нет доступных чатов"
-              description="Добавьте бота в Telegram-чат и назначьте администратором. Доступ появится после синхронизации прав."
+              description="Добавьте бота в Telegram-чат, назначьте администратором и выполните /setup. Доступ появится после проверки прав."
             />
           ) : (
             <WorkspaceContext.Provider
+              key={chat.id}
               value={{ chat, token: session.access_token, mode: session.mode }}
             >
-              <div className="mobile-chat">
-                <span className="chat-mark">{chat.title[0]}</span>
-                <select
-                  aria-label="Текущий чат"
-                  value={chat.id}
-                  onChange={(e) => setSelectedChat(Number(e.target.value))}
-                >
-                  {chats.data.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={15} />
-              </div>
               <Routes>
                 <Route index element={<DashboardPage />} />
                 <Route path="moderation" element={<ModerationPage />} />
@@ -347,61 +260,73 @@ function WorkspaceShell() {
               </Routes>
             </WorkspaceContext.Provider>
           )}
-          <footer className="content-footer">
-            <span>NOX · Создан для вашего сообщества</span>
-            <span>
-              <ShieldCheck size={12} />
-              Приватность по умолчанию
-            </span>
+          <footer className="nox-workspace-footer">
+            <span>ASTRA COMMUNITY PLATFORM</span>
+            <span>МЕНЬШЕ ШУМА. БОЛЬШЕ СВЯЗИ.</span>
           </footer>
         </main>
       </div>
-      <nav className="bottom-nav" aria-label="Мобильная навигация">
-        {nav
+      <nav className="nox-dock" aria-label="Мобильная навигация">
+        {navigation
           .filter((item) =>
             ["/", "/moderation", "/shield", "/studio"].includes(item.path),
           )
           .map((item) => (
-            <NavLink key={item.path} to={item.path} end={item.path === "/"}>
-              <item.icon size={21} />
-              <span>{item.label === "NOX Shield" ? "Защита" : item.label}</span>
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/"}
+              className={({ isActive }) => (isActive ? "is-active" : "")}
+            >
+              <item.icon size={20} strokeWidth={1.8} aria-hidden="true" />
+              <span>{item.path === "/shield" ? "Защита" : item.label}</span>
             </NavLink>
           ))}
-        <button onClick={() => setMenu(true)} className={menu ? "active" : ""}>
-          <Menu size={21} />
+        <button
+          type="button"
+          aria-expanded={menuOpen}
+          aria-haspopup="dialog"
+          onClick={() => setMenuOpen(true)}
+          className={
+            menuOpen ||
+            ["/intelligence", "/analytics", "/appeals", "/settings"].includes(
+              location.pathname,
+            )
+              ? "is-active"
+              : ""
+          }
+        >
+          <Ellipsis size={21} aria-hidden="true" />
           <span>Ещё</span>
         </button>
       </nav>
-      {menu && (
-        <div className="mobile-menu-backdrop" onClick={closeMenu}>
-          <div
-            className="mobile-menu"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Навигация"
-          >
-            <div className="mobile-menu-header">
-              <Logo />
-              <button
-                className="icon-button"
-                onClick={closeMenu}
-                aria-label="Закрыть меню"
-              >
-                <X size={22} />
-              </button>
-            </div>
+      {menuOpen && (
+        <Modal
+          title="Навигация"
+          description="Ваше пространство Astra"
+          onClose={() => setMenuOpen(false)}
+        >
+          <nav className="nox-menu-nav" aria-label="Разделы пространства">
             {links}
-            <button className="nav-link" onClick={logout}>
+          </nav>
+          <div className="nox-menu-account">
+            <Avatar name={session.user.first_name} />
+            <span>
+              {session.user.first_name}
+              <small>
+                {session.mode === "demo" ? "Демо-администратор" : role}
+              </small>
+            </span>
+            <button
+              type="button"
+              className="nox-logout"
+              aria-label="Завершить сессию"
+              onClick={() => void logout()}
+            >
               <LogOut size={19} />
-              Завершить сессию
             </button>
-            <p className="menu-hint">
-              <CircleHelp size={15} />
-              Права на действия проверяются сервером.
-            </p>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

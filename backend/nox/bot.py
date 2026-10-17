@@ -144,7 +144,7 @@ async def onboard_chat(
     db: Database, gateway: TelegramGateway, chat: TelegramChat, actor: TelegramUser
 ) -> None:
     if chat.type not in {"group", "supergroup"}:
-        raise ValueError("Добавьте NOX в группу и выполните /setup в этой группе.")
+        raise ValueError("Добавьте Astra в группу и выполните /setup в этой группе.")
     live_actor = await gateway.assert_admin(chat.id, actor.id)
     await gateway.assert_admin(chat.id, await gateway.bot_id())
     count = await _telegram_call(gateway.bot.get_chat_member_count(chat.id))
@@ -240,7 +240,7 @@ def build_dispatcher(
     async def help_command(message: Message) -> None:
         await _safe_reply(
             message,
-            "NOX — управление сообществом.\n"
+            "Astra — управление сообществом.\n"
             "В группе: /setup (для администратора). Выдайте боту права администратора.\n"
             "Ответьте на сообщение участника:\n"
             "/warn причина · /unwarn причина\n"
@@ -262,7 +262,8 @@ def build_dispatcher(
             await _safe_reply(message, str(error))
             return
         await _safe_reply(
-            message, "Чат подключён к NOX. Откройте Mini App через меню бота. Настройки сохранены."
+            message,
+            "Чат подключён к Astra. Откройте Mini App через меню бота. Настройки сохранены.",
         )
 
     @router.my_chat_member()

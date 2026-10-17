@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Check, LockKeyhole, Save, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Fingerprint, LockKeyhole, Save } from "lucide-react";
 import type { AuditEvent, Page, Settings } from "../types";
 import { api, formatDate, json } from "../api";
 import { useChatQuery, useWorkspace } from "../workspace";
 import {
-  Badge,
   Button,
   Empty,
   ErrorState,
@@ -15,10 +14,12 @@ import {
   PageHeader,
   SectionHeading,
 } from "../components/ui";
+import "../styles/advanced-pages.css";
+
 export function SettingsPage() {
   const query = useChatQuery<Settings>("settings");
   const { chat } = useWorkspace();
-  if (query.isPending) return <Loading />;
+  if (query.isPending) return <Loading label="Загружаем настройки" />;
   if (query.isError)
     return (
       <ErrorState error={query.error} retry={() => void query.refetch()} />
@@ -56,48 +57,52 @@ function SettingsForm({ initial }: { initial: Settings }) {
     setSaved(false);
   }
   return (
-    <div className="page-enter">
+    <div className="page-enter ap-page">
       <PageHeader
-        eyebrow="WORKSPACE PREFERENCES"
-        title="По вашим правилам"
-        description="Настройки сообщества, прозрачность действий и контроль данных."
+        eyebrow="06 / WORKSPACE CONTROL"
+        title="Настройки"
+        description="Параметры сообщества, права доступа и политика хранения данных."
       />
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
+        className="ap-settings-form"
+        onSubmit={(event) => {
+          event.preventDefault();
           mutation.mutate();
         }}
       >
-        <div className="settings-grid">
-          <section className="panel settings-panel">
-            <SectionHeading
-              title="Сообщество"
-              meta="Основные параметры рабочего пространства"
-            />
+        <section className="ap-setting-section panel">
+          <div className="ap-setting-heading">
+            <span className="ap-index">01</span>
+            <h2>Сообщество</h2>
+            <p>Название и реакция на события.</p>
+          </div>
+          <div className="ap-setting-fields">
             <Field label="Название чата">
               <input
                 required
                 minLength={2}
                 maxLength={128}
                 value={form.title}
-                onChange={(e) => change({ title: e.target.value })}
+                onChange={(event) => change({ title: event.target.value })}
               />
             </Field>
             <Field
               label="Приветственное сообщение"
-              hint="Используется сценарием приветствия NOX Studio."
+              hint="Используется сценарием приветствия в Astra Studio."
             >
               <textarea
                 required
                 maxLength={1000}
                 rows={4}
                 value={form.welcome_message}
-                onChange={(e) => change({ welcome_message: e.target.value })}
+                onChange={(event) =>
+                  change({ welcome_message: event.target.value })
+                }
               />
             </Field>
             <Field
               label="Лимит предупреждений"
-              hint="При достижении лимита применяется разрешённая эскалация."
+              hint="Порог автоматической эскалации в модерации."
             >
               <input
                 required
@@ -105,21 +110,24 @@ function SettingsForm({ initial }: { initial: Settings }) {
                 min={1}
                 max={20}
                 value={form.warn_limit}
-                onChange={(e) => change({ warn_limit: Number(e.target.value) })}
+                onChange={(event) =>
+                  change({ warn_limit: Number(event.target.value) })
+                }
               />
             </Field>
-          </section>
-          <section className="panel settings-panel">
-            <SectionHeading
-              title="Приватность и доступ"
-              meta="Минимум данных. Понятные полномочия."
-            />
-            <div className="privacy-symbol">
-              <LockKeyhole size={30} strokeWidth={1.3} />
-            </div>
+          </div>
+        </section>
+        <section className="ap-setting-section panel">
+          <div className="ap-setting-heading">
+            <span className="ap-index">02</span>
+            <h2>Приватность</h2>
+            <p>Управляйте сроком хранения событий.</p>
+            <Fingerprint size={70} strokeWidth={0.7} aria-hidden="true" />
+          </div>
+          <div className="ap-setting-fields">
             <Field
               label="Хранение событий, дней"
-              hint="Применяется к журналам и контексту сообщений; финансовые и системные записи хранятся по отдельной политике."
+              hint="Срок хранения журналов и контекста сообщений. Системные и финансовые записи регулируются отдельно."
             >
               <input
                 required
@@ -127,73 +135,83 @@ function SettingsForm({ initial }: { initial: Settings }) {
                 min={7}
                 max={365}
                 value={form.privacy_retention_days}
-                onChange={(e) =>
-                  change({ privacy_retention_days: Number(e.target.value) })
+                onChange={(event) =>
+                  change({ privacy_retention_days: Number(event.target.value) })
                 }
               />
             </Field>
-            <div className="permission-row">
-              <ShieldCheck size={18} />
-              <span>Контроль доступа</span>
-              <Badge tone="green">RBAC</Badge>
+            <div className="ap-access-info">
+              <LockKeyhole size={19} />
+              <div>
+                <strong>Доступ проверяется сервером</strong>
+                <p>
+                  Каждое изменение записывается в аудит. Права Telegram не
+                  выдаются через Mini App.
+                </p>
+              </div>
             </div>
-            <div className="permission-row">
-              <Check size={18} />
-              <span>Ваша роль</span>
-              <Badge tone="violet">
-                {{
-                  owner: "Владелец",
-                  admin: "Администратор",
-                  moderator: "Модератор",
-                }[chat.role] ?? chat.role}
-              </Badge>
-            </div>
-            <p className="privacy-note">
-              Каждое изменение проверяется сервером и записывается в аудит.
-              Права Telegram не выдаются через Mini App.
-            </p>
-          </section>
-        </div>
+            <dl className="ap-access-list">
+              <div>
+                <dt>Контроль доступа</dt>
+                <dd>RBAC</dd>
+              </div>
+              <div>
+                <dt>Ваша роль</dt>
+                <dd>
+                  {{
+                    owner: "Владелец",
+                    admin: "Администратор",
+                    moderator: "Модератор",
+                  }[chat.role] ?? chat.role}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
         {mutation.isError && <Notice error>{mutation.error.message}</Notice>}
         {saved && <Notice>Настройки сохранены.</Notice>}
-        <div className="settings-save">
-          <span>Изменения применяются после сохранения.</span>
+        <div className="ap-save-bar">
+          <p>Изменения применяются после сохранения.</p>
           <Button type="submit" loading={mutation.isPending}>
             <Save size={16} />
             Сохранить изменения
           </Button>
         </div>
       </form>
-      <section className="panel audit-panel">
+      <section className="panel ap-history">
         <SectionHeading
           title="Журнал аудита"
-          meta="Изменения, которые всегда на виду"
+          meta="Последние 20 действий администраторов и системных правил."
         >
-          <BookOpen size={19} className="muted" />
+          <ArrowUpRight size={21} />
         </SectionHeading>
         {audit.isPending ? (
-          <Loading />
+          <Loading label="Загружаем аудит" />
         ) : audit.isError ? (
           <ErrorState error={audit.error} retry={() => void audit.refetch()} />
         ) : !audit.data.items.length ? (
           <Empty
-            title="Изменений пока нет"
-            description="Здесь появятся действия администраторов и системных правил."
+            title="Журнал пока пуст"
+            description="После первого изменения здесь появятся детали действия и его автор."
           />
         ) : (
-          <div className="audit-list">
+          <ol className="ap-journal">
             {audit.data.items.slice(0, 20).map((event) => (
-              <div className="audit-row" key={event.id}>
-                <span className="audit-dot" />
+              <li key={event.id}>
+                <span className="ap-journal-mark">
+                  <Fingerprint size={17} />
+                </span>
                 <div>
                   <strong>{event.action}</strong>
                   <p>{event.detail}</p>
                   <small>{event.actor_name}</small>
                 </div>
-                <time>{formatDate(event.created_at)}</time>
-              </div>
+                <time dateTime={event.created_at}>
+                  {formatDate(event.created_at)}
+                </time>
+              </li>
             ))}
-          </div>
+          </ol>
         )}
       </section>
     </div>

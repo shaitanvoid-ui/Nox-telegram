@@ -6,7 +6,6 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ActivityChart } from "../src/components/dashboard/ActivityChart";
 import { DashboardView } from "../src/components/dashboard/DashboardView";
-import { ShieldRing } from "../src/components/dashboard/ShieldRing";
 import type { Dashboard } from "../src/types";
 
 // jsdom has no layout; retain real Recharts rendering with explicit chart dimensions.
@@ -41,34 +40,6 @@ const data: Dashboard = {
   mode: "demo",
 };
 
-describe("data-driven Shield contour", () => {
-  it("renders a complete circle for a single module instead of an invisible 360-degree SVG arc", () => {
-    const view = render(<ShieldRing enabled={1} total={1} />);
-    expect(
-      screen.getByRole("img", { name: "Включено модулей защиты: 1 из 1" }),
-    ).toBeInTheDocument();
-    expect(
-      view.container.querySelector("circle.nox-segment--on"),
-    ).toHaveAttribute("r", "83");
-  });
-
-  it("clamps counts and handles an unconfigured contour without NaN", () => {
-    const view = render(<ShieldRing enabled={15} total={10} />);
-    expect(screen.getByRole("img")).toHaveAccessibleName(
-      "Включено модулей защиты: 10 из 10",
-    );
-    expect(view.container.querySelectorAll(".nox-segment--on")).toHaveLength(
-      10,
-    );
-    view.rerender(<ShieldRing enabled={4} total={0} />);
-    expect(screen.getByRole("img")).toHaveAccessibleName(
-      "Включено модулей защиты: 0 из 0",
-    );
-    expect(view.container.innerHTML).not.toContain("NaN");
-    expect(view.container.querySelectorAll(".nox-segment--on")).toHaveLength(0);
-  });
-});
-
 describe("independent activity scales and accessible day selection", () => {
   it("updates both values through the focusable day control and exposes all data as a table", async () => {
     const user = userEvent.setup();
@@ -85,7 +56,7 @@ describe("independent activity scales and accessible day selection", () => {
       "aria-valuetext",
       "14 окт.: сообщения — 2 600, нарушения — 3",
     );
-    const readout = view.container.querySelector(".nox-chart-readout")!;
+    const readout = view.container.querySelector(".nd-chart-readout")!;
     expect(readout).toHaveTextContent("14 окт.");
     expect(readout).toHaveTextContent("2 600");
     expect(readout).toHaveTextContent("3");
@@ -166,25 +137,25 @@ describe("independent activity scales and accessible day selection", () => {
 });
 
 describe("dashboard facts and request states", () => {
-  it("derives the enabled-module percentage from real counts and preserves actual navigation", () => {
+  it("reports actual module counts without treating them as a safety score and preserves navigation", () => {
     render(
       <MemoryRouter>
         <DashboardView
-          communityName="NOX Community"
+          communityName="Astra Community"
           status="success"
           data={data}
         />
       </MemoryRouter>,
     );
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Включено 8 из 10 модулей защиты",
+      "Ваше сообщество.",
     );
-    const metric = screen.getByText("Включено модулей").closest(".nox-metric")!;
-    expect(metric).toHaveTextContent("80%");
-    expect(metric).not.toHaveTextContent("99%");
-    expect(
-      screen.getByRole("link", { name: "Настроить Shield" }),
-    ).toHaveAttribute("href", "/shield");
+    expect(screen.getByText("8 из 10 модулей включено")).toBeInTheDocument();
+    expect(screen.queryByText("99%")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Astra Shield/ })).toHaveAttribute(
+      "href",
+      "/shield",
+    );
     expect(screen.getByRole("link", { name: /Апелляции/ })).toHaveAttribute(
       "href",
       "/appeals",
@@ -193,11 +164,36 @@ describe("dashboard facts and request states", () => {
     expect(screen.queryByRole("main")).not.toBeInTheDocument();
   });
 
+  it("handles missing and inconsistent module counts without inventing a security score", () => {
+    const view = render(
+      <MemoryRouter>
+        <DashboardView
+          communityName="Astra Community"
+          status="success"
+          data={{ ...data, protection: { enabled: 15, total: 10 } }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("10 из 10 модулей включено")).toBeInTheDocument();
+    view.rerender(
+      <MemoryRouter>
+        <DashboardView
+          communityName="Astra Community"
+          status="success"
+          data={{ ...data, protection: { enabled: 4, total: 0 } }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Модули ещё не настроены")).toBeInTheDocument();
+    expect(view.container.innerHTML).not.toContain("NaN");
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+  });
+
   it("offers retry on server failure, explains denied access, and represents loading honestly", async () => {
     const retry = vi.fn();
     const view = render(
       <DashboardView
-        communityName="NOX"
+        communityName="Astra"
         status="error"
         errorCode={503}
         onRetry={retry}
@@ -212,7 +208,7 @@ describe("dashboard facts and request states", () => {
     expect(retry).toHaveBeenCalledOnce();
     view.rerender(
       <DashboardView
-        communityName="NOX"
+        communityName="Astra"
         status="error"
         errorCode={403}
         onRetry={retry}
@@ -220,7 +216,7 @@ describe("dashboard facts and request states", () => {
     );
     expect(screen.getByRole("alert")).toHaveTextContent("Нет доступа к обзору");
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    view.rerender(<DashboardView communityName="NOX" status="pending" />);
+    view.rerender(<DashboardView communityName="Astra" status="pending" />);
     expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
   });

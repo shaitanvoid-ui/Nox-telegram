@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDown,
-  ArrowRight,
-  Braces,
+  ArrowUpRight,
+  Check,
   CirclePlay,
   GitBranch,
   Plus,
@@ -35,6 +35,8 @@ import {
   SectionHeading,
   Switch,
 } from "../components/ui";
+import "../styles/advanced-pages.css";
+
 const triggers: Record<Trigger, string> = {
   member_join: "Новый участник",
   flood: "Обнаружен флуд",
@@ -45,6 +47,17 @@ const actions: Record<Action, string> = {
   delete: "Удалить сообщение",
   mute: "Временный мут",
 };
+const executionStatus: Record<string, string> = {
+  completed: "Выполнено",
+  success: "Выполнено",
+  succeeded: "Выполнено",
+  failed: "Ошибка",
+  pending: "Ожидает",
+  skipped: "Пропущено",
+  unknown: "Нужна проверка",
+  running: "Выполняется",
+};
+
 export function StudioPage() {
   const query = useChatQuery<Page<Automation>>("automation");
   const history = useChatQuery<Page<AutomationExecution>>(
@@ -65,12 +78,18 @@ export function StudioPage() {
         queryKey: ["chat", chat.id, "automation"],
       }),
   });
+  if (query.isPending) return <Loading label="Загружаем сценарии" />;
+  if (query.isError)
+    return (
+      <ErrorState error={query.error} retry={() => void query.refetch()} />
+    );
+  const active = query.data.items.filter((rule) => rule.enabled).length;
   return (
-    <div className="page-enter">
+    <div className="page-enter ap-page">
       <PageHeader
-        eyebrow="NOX STUDIO / AUTOMATION"
-        title="Меньше рутины. Больше идей"
-        description="Соберите поведение NOX из понятных событий, условий и действий."
+        eyebrow="03 / ASTRA STUDIO"
+        title="Сценарии"
+        description="Событие. Условие. Действие. Настройте свою логику сообщества."
         action={
           <Button onClick={() => setEditing("new")}>
             <Plus size={17} />
@@ -78,59 +97,57 @@ export function StudioPage() {
           </Button>
         }
       />
-      <section className="studio-intro panel">
-        <div className="studio-intro-copy">
-          <Badge tone="violet">
-            <Workflow size={12} />
-            AUTOMATION, SIMPLIFIED
-          </Badge>
-          <h2>
-            Ваши правила.
-            <br />
-            <span>Идеальное исполнение.</span>
-          </h2>
-          <p>
-            NOX реагирует на события, проверяет условия и выполняет разрешённое
-            действие.
-          </p>
+      <section
+        className="ap-flow-overview panel"
+        aria-label="Принцип работы автоматизации"
+      >
+        <div className="ap-flow-summary">
+          <span className="eyebrow">AUTOMATION ENGINE</span>
+          <strong>
+            {String(active).padStart(2, "0")}
+            <span> / {String(query.data.total).padStart(2, "0")}</span>
+          </strong>
+          <p>сценариев включено</p>
         </div>
-        <div className="flow-demo" aria-label="Событие, условие, действие">
-          <div>
-            <Radio size={23} />
-            <span>Событие</span>
-            <small>Что произошло?</small>
-          </div>
-          <ArrowRight size={18} className="flow-arrow" />
-          <div>
-            <GitBranch size={23} />
-            <span>Условие</span>
-            <small>Когда реагировать?</small>
-          </div>
-          <ArrowRight size={18} className="flow-arrow" />
-          <div>
-            <Zap size={23} />
-            <span>Действие</span>
-            <small>Что сделать?</small>
-          </div>
-        </div>
+        <ol className="ap-flow-steps">
+          <li>
+            <span>01</span>
+            <Radio size={22} strokeWidth={1.4} />
+            <div>
+              <strong>Событие</strong>
+              <p>Что произошло</p>
+            </div>
+          </li>
+          <li>
+            <span>02</span>
+            <GitBranch size={22} strokeWidth={1.4} />
+            <div>
+              <strong>Условие</strong>
+              <p>Когда реагировать</p>
+            </div>
+          </li>
+          <li>
+            <span>03</span>
+            <Zap size={22} strokeWidth={1.4} />
+            <div>
+              <strong>Действие</strong>
+              <p>Как ответит Astra</p>
+            </div>
+          </li>
+        </ol>
       </section>
-      <div className="section-heading">
-        <div>
-          <h2>Ваши сценарии</h2>
-          <p>Приоритет определяет порядок выполнения.</p>
-        </div>
-        <Badge>{query.data?.total ?? 0} сценариев</Badge>
-      </div>
+      <SectionHeading
+        title="Ваши сценарии"
+        meta="Выполняются в порядке приоритета."
+      >
+        <Badge>{query.data.total}</Badge>
+      </SectionHeading>
       {mutation.isError && <Notice error>{mutation.error.message}</Notice>}
-      {query.isPending ? (
-        <Loading />
-      ) : query.isError ? (
-        <ErrorState error={query.error} retry={() => void query.refetch()} />
-      ) : !query.data.items.length ? (
+      {!query.data.items.length ? (
         <section className="panel">
           <Empty
-            title="Первый шаг к свободе от рутины"
-            description="Создайте сценарий приветствия, защиты от флуда или эскалации предупреждений."
+            title="Создайте первый сценарий"
+            description="Приветствие, реакция на флуд или эскалация предупреждений — начните с одного события."
             action={
               <Button onClick={() => setEditing("new")}>
                 <Plus size={16} />
@@ -140,19 +157,19 @@ export function StudioPage() {
           />
         </section>
       ) : (
-        <div className="rules-list">
-          {query.data.items.map((rule) => (
-            <section className="panel rule-card" key={rule.id}>
-              <div className="rule-card-top">
-                <div className="quick-icon violet">
-                  <Workflow size={21} />
-                </div>
+        <div className="ap-rules">
+          {query.data.items.map((rule, index) => (
+            <article className="ap-rule panel" key={rule.id}>
+              <header className="ap-rule-header">
+                <span className="ap-index">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <div>
                   <h2>{rule.name}</h2>
-                  <span>
+                  <p>
                     Приоритет {rule.priority} · {formatNumber(rule.executions)}{" "}
                     выполнений
-                  </span>
+                  </p>
                 </div>
                 <Switch
                   checked={rule.enabled}
@@ -162,45 +179,47 @@ export function StudioPage() {
                     mutation.mutate({ id: rule.id, enabled })
                   }
                 />
-              </div>
-              <div className="rule-flow">
+              </header>
+              <div className="ap-rule-logic">
                 <span>
-                  <Radio size={14} />
+                  <Radio size={15} />
                   {triggers[rule.trigger]}
                 </span>
-                <ArrowRight size={14} />
+                <ArrowUpRight size={16} />
                 <span>
-                  <Braces size={14} />
+                  <GitBranch size={15} />
                   {rule.conditions.threshold
                     ? `Порог ≥ ${rule.conditions.threshold}`
-                    : "Любое событие"}
+                    : "Каждое вступление"}
                 </span>
-                <ArrowRight size={14} />
+                <ArrowUpRight size={16} />
                 <span>
-                  <Zap size={14} />
+                  <Zap size={15} />
                   {actions[rule.action]}
                 </span>
               </div>
-              <div className="rule-card-bottom">
+              <footer>
                 <Badge tone={rule.enabled ? "green" : "muted"}>
                   {rule.enabled ? "Активен" : "Приостановлен"}
                 </Badge>
                 <button className="text-link" onClick={() => setEditing(rule)}>
                   Открыть редактор
-                  <ArrowRight size={15} />
+                  <ArrowUpRight size={17} />
                 </button>
-              </div>
-            </section>
+              </footer>
+            </article>
           ))}
         </div>
       )}
-      <section className="panel studio-history">
+      <section className="panel ap-history">
         <SectionHeading
           title="История выполнения"
-          meta="Последние 20 выполнений сценариев"
-        />
+          meta="Последние 20 событий. Предпросмотры сюда не попадают."
+        >
+          <Workflow size={20} />
+        </SectionHeading>
         {history.isPending ? (
-          <Loading />
+          <Loading label="Загружаем историю" />
         ) : history.isError ? (
           <ErrorState
             error={history.error}
@@ -208,22 +227,26 @@ export function StudioPage() {
           />
         ) : !history.data.items.length ? (
           <Empty
-            title="Сценарии ещё не выполнялись"
-            description="История появится после подходящего события. Предпросмотр не создаёт выполнение."
+            title="Пока без выполнений"
+            description="Здесь появятся результаты после первого подходящего события."
           />
         ) : (
-          <div className="audit-list">
+          <ol className="ap-journal">
             {history.data.items.map((item) => (
-              <div className="audit-row" key={item.id}>
-                <span className="audit-dot" />
+              <li key={item.id}>
+                <span className="ap-journal-mark">
+                  <Workflow size={16} />
+                </span>
                 <div>
                   <strong>{item.rule_name}</strong>
-                  <p>{item.status}</p>
+                  <p>{executionStatus[item.status] ?? item.status}</p>
                 </div>
-                <time>{formatDate(item.created_at)}</time>
-              </div>
+                <time dateTime={item.created_at}>
+                  {formatDate(item.created_at)}
+                </time>
+              </li>
             ))}
-          </div>
+          </ol>
         )}
       </section>
       {editing && (
@@ -235,6 +258,7 @@ export function StudioPage() {
     </div>
   );
 }
+
 function AutomationEditor({
   initial,
   onClose,
@@ -307,13 +331,13 @@ function AutomationEditor({
   return (
     <Modal
       title={initial ? "Редактор сценария" : "Новый сценарий"}
-      description="Сначала проверьте логику в безопасном предпросмотре."
+      description="Проверьте логику до сохранения. Предпросмотр не выполняет действий."
       onClose={onClose}
     >
       <form
-        className="form-stack automation-form"
-        onSubmit={(e) => {
-          e.preventDefault();
+        className="form-stack ap-editor"
+        onSubmit={(event) => {
+          event.preventDefault();
           save.mutate();
         }}
       >
@@ -322,25 +346,22 @@ function AutomationEditor({
             required
             minLength={3}
             maxLength={100}
-            placeholder="Например, тёплый приём"
+            placeholder="Например, приветствие участников"
             value={draft.name}
-            onChange={(e) => change({ name: e.target.value })}
+            onChange={(event) => change({ name: event.target.value })}
           />
         </Field>
-        <div className="editor-node">
-          <div className="editor-node-title">
-            <span>
-              <Radio size={16} />
-              01 / СОБЫТИЕ
-            </span>
-            <Badge tone="violet">TRIGGER</Badge>
+        <div className="ap-editor-node">
+          <div className="ap-node-heading">
+            <span>01 / СОБЫТИЕ</span>
+            <Radio size={18} />
           </div>
           <Field label="Когда">
             <select
               disabled={Boolean(initial)}
               value={draft.trigger}
-              onChange={(e) => {
-                const trigger = e.target.value as Trigger;
+              onChange={(event) => {
+                const trigger = event.target.value as Trigger;
                 change({
                   trigger,
                   conditions: trigger === "member_join" ? {} : { threshold: 3 },
@@ -361,17 +382,14 @@ function AutomationEditor({
             </select>
           </Field>
         </div>
-        <ArrowDown size={18} className="editor-arrow" />
-        <div className="editor-node">
-          <div className="editor-node-title">
-            <span>
-              <GitBranch size={16} />
-              02 / УСЛОВИЕ
-            </span>
-            <Badge tone="cyan">CONDITION</Badge>
+        <ArrowDown size={17} className="ap-node-arrow" />
+        <div className="ap-editor-node">
+          <div className="ap-node-heading">
+            <span>02 / УСЛОВИЕ</span>
+            <GitBranch size={18} />
           </div>
           {draft.trigger === "member_join" ? (
-            <p className="muted">
+            <p className="ap-editor-hint">
               При каждом новом вступлении. Дополнительные условия не требуются.
             </p>
           ) : (
@@ -389,11 +407,11 @@ function AutomationEditor({
                 min={1}
                 max={1000}
                 value={draft.conditions.threshold ?? 3}
-                onChange={(e) =>
+                onChange={(event) =>
                   change({
                     conditions: {
                       ...draft.conditions,
-                      threshold: Number(e.target.value),
+                      threshold: Number(event.target.value),
                     },
                   })
                 }
@@ -401,20 +419,19 @@ function AutomationEditor({
             </Field>
           )}
         </div>
-        <ArrowDown size={18} className="editor-arrow" />
-        <div className="editor-node">
-          <div className="editor-node-title">
-            <span>
-              <Zap size={16} />
-              03 / ДЕЙСТВИЕ
-            </span>
-            <Badge tone="amber">ACTION</Badge>
+        <ArrowDown size={17} className="ap-node-arrow" />
+        <div className="ap-editor-node">
+          <div className="ap-node-heading">
+            <span>03 / ДЕЙСТВИЕ</span>
+            <Zap size={18} />
           </div>
-          <Field label="NOX должен">
+          <Field label="Что сделает Astra">
             <select
               disabled={Boolean(initial)}
               value={draft.action}
-              onChange={(e) => change({ action: e.target.value as Action })}
+              onChange={(event) =>
+                change({ action: event.target.value as Action })
+              }
             >
               {Object.entries(actions)
                 .filter(([key]) =>
@@ -431,34 +448,34 @@ function AutomationEditor({
                 ))}
             </select>
           </Field>
+          {draft.action === "mute" && (
+            <Field label="Длительность мута, минут">
+              <input
+                disabled={Boolean(initial)}
+                type="number"
+                required
+                min={1}
+                max={1440}
+                value={draft.conditions.duration_minutes ?? 60}
+                onChange={(event) =>
+                  change({
+                    conditions: {
+                      ...draft.conditions,
+                      duration_minutes: Number(event.target.value),
+                    },
+                  })
+                }
+              />
+            </Field>
+          )}
         </div>
         {initial && (
-          <p className="muted editor-note">
+          <p className="ap-editor-hint">
             Можно изменить название, приоритет и состояние. Для другой логики
             создайте новый сценарий.
           </p>
         )}
-        {draft.action === "mute" && (
-          <Field label="Длительность мута, минут">
-            <input
-              disabled={Boolean(initial)}
-              type="number"
-              required
-              min={1}
-              max={1440}
-              value={draft.conditions.duration_minutes ?? 60}
-              onChange={(e) =>
-                change({
-                  conditions: {
-                    ...draft.conditions,
-                    duration_minutes: Number(e.target.value),
-                  },
-                })
-              }
-            />
-          </Field>
-        )}
-        <div className="form-two">
+        <div className="ap-editor-options">
           <Field label="Приоритет">
             <input
               required
@@ -466,10 +483,12 @@ function AutomationEditor({
               min={0}
               max={100}
               value={draft.priority}
-              onChange={(e) => change({ priority: Number(e.target.value) })}
+              onChange={(event) =>
+                change({ priority: Number(event.target.value) })
+              }
             />
           </Field>
-          <div className="form-toggle">
+          <div className="ap-switch-label">
             <span>Включить после сохранения</span>
             <Switch
               checked={draft.enabled}
@@ -480,10 +499,13 @@ function AutomationEditor({
         </div>
         {preview && (
           <Notice>
-            {preview.explanation}{" "}
-            {preview.side_effects
-              ? "Результат содержит действия."
-              : "Действия не выполнялись."}
+            <span className="ap-preview-result">
+              <Check size={16} />
+              {preview.explanation}{" "}
+              {preview.side_effects
+                ? "Предпросмотр описывает запланированные действия."
+                : "Действия не выполнялись."}
+            </span>
           </Notice>
         )}
         {(save.error || dryRun.error) && (

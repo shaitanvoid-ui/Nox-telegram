@@ -40,6 +40,26 @@ describe("accessible controls", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 
+  it("opens auxiliary form actions without submitting and submits only through an explicit submit control", async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+      >
+        <Button>Открыть редактор</Button>
+        <Button type="submit">Сохранить форму</Button>
+      </form>,
+    );
+    await user.click(screen.getByRole("button", { name: "Открыть редактор" }));
+    expect(submit).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Сохранить форму" }));
+    expect(submit).toHaveBeenCalledOnce();
+  });
+
   it("distinguishes authorization denial from a recoverable server failure", async () => {
     const retry = vi.fn();
     const view = render(

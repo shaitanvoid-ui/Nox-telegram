@@ -1,12 +1,12 @@
 name: Ошибка
-description: Воспроизводимая ошибка NOX без секретов и персональных данных
+description: Воспроизводимая ошибка Astra без секретов и персональных данных
 labels: [bug]
 body:
   - type: textarea
     id: steps
     attributes:
       label: Шаги воспроизведения
-      description: Укажите версию NOX, окружение и минимальный сценарий. Не прикладывайте токены или initData.
+      description: Укажите версию Astra, окружение и минимальный сценарий. Не прикладывайте токены или initData.
     validations:
       required: true
   - type: textarea

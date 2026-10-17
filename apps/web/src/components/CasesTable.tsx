@@ -1,13 +1,16 @@
 import {
+  ArrowUpRight,
   Ban,
   Clock3,
   MessageSquareWarning,
-  MoreHorizontal,
+  ShieldCheck,
   VolumeX,
 } from "lucide-react";
 import type { Case } from "../types";
 import { caseNames, formatDate, statusNames } from "../api";
 import { Avatar, Badge, Empty } from "./ui";
+import "../styles/moderation-shield.css";
+
 export function CasesTable({
   items,
   onRevoke,
@@ -21,15 +24,15 @@ export function CasesTable({
     return (
       <Empty
         title="История пока чиста"
-        description="Здесь появятся действия модераторов и автоматических правил."
+        description="Здесь появятся решения модераторов и автоматических правил."
       />
     );
   return (
-    <div className="case-table">
-      <div className="case-table-head">
+    <div className={`nox-cases ${onRevoke ? "nox-cases-editable" : ""}`}>
+      <div className="nox-cases-head" aria-hidden="true">
         <span>Участник / причина</span>
         <span>Действие</span>
-        <span>Время</span>
+        <span>Создано</span>
         <span>Статус</span>
         {onRevoke && <span />}
       </div>
@@ -39,54 +42,76 @@ export function CasesTable({
             ? Ban
             : item.kind === "mute"
               ? VolumeX
-              : MessageSquareWarning;
+              : ["unban", "unmute", "unwarn"].includes(item.kind)
+                ? ShieldCheck
+                : MessageSquareWarning;
+        const canRevoke =
+          ["active", "applied"].includes(item.status) &&
+          ["ban", "mute", "warn"].includes(item.kind);
         return (
-          <div className="case-row" key={item.id}>
-            <div className="case-person">
+          <article
+            className="case-row nox-case-row"
+            key={item.id}
+            aria-label={`${caseNames[item.kind] ?? item.kind}: ${item.target_name}`}
+          >
+            <div className="nox-case-person">
               <Avatar name={item.target_name} />
               <div>
                 <strong>{item.target_name}</strong>
-                <span title={item.reason}>{item.reason}</span>
+                <p title={item.reason}>{item.reason}</p>
+                <span className="nox-case-actor">{item.actor_name}</span>
               </div>
             </div>
-            <span className={`case-action ${item.kind}`}>
-              <Icon size={14} />
+            <span className={`nox-case-kind nox-case-kind-${item.kind}`}>
+              <Icon size={15} />
               {caseNames[item.kind] ?? item.kind}
             </span>
-            <span className="case-date">
-              <Clock3 size={12} />
-              {formatDate(item.created_at)}
-            </span>
-            <Badge
-              tone={
-                ["active", "applied"].includes(item.status)
-                  ? "amber"
-                  : item.status === "failed"
-                    ? "red"
-                    : "muted"
-              }
-            >
-              {statusNames[item.status] ?? item.status}
-            </Badge>
+            <div className="nox-case-time">
+              <time dateTime={item.created_at}>
+                <Clock3 size={13} />
+                {formatDate(item.created_at)}
+              </time>
+              {item.expires_at && (
+                <small>До {formatDate(item.expires_at)}</small>
+              )}
+            </div>
+            <div className="nox-case-status">
+              <Badge
+                tone={
+                  item.status === "unknown"
+                    ? "amber"
+                    : item.status === "failed"
+                      ? "red"
+                      : ["active", "applied"].includes(item.status)
+                        ? "green"
+                        : "muted"
+                }
+              >
+                {statusNames[item.status] ?? item.status}
+              </Badge>
+            </div>
             {onRevoke && (
-              <div className="case-control">
-                {["active", "applied"].includes(item.status) &&
-                item.kind !== "kick" ? (
+              <div className="nox-case-control">
+                {canRevoke ? (
                   <button
+                    type="button"
+                    className="nox-case-revoke"
                     title="Отменить наказание"
                     aria-label={`Отменить наказание ${item.target_name}`}
-                    className="icon-button"
                     disabled={pending}
                     onClick={() => onRevoke(item)}
                   >
-                    <MoreHorizontal size={18} />
+                    <ArrowUpRight size={18} />
+                    <span>Отменить</span>
                   </button>
                 ) : (
-                  <span className="case-no-action">—</span>
+                  <span className="nox-case-unavailable" aria-hidden="true">
+                    —
+                  </span>
                 )}
               </div>
             )}
-          </div>
+          </article>
         );
       })}
     </div>

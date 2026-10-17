@@ -267,7 +267,7 @@ async def audit(
             {
                 "id": e.id,
                 "action": e.action,
-                "actor_name": name or "NOX",
+                "actor_name": name or "Astra",
                 "detail": e.detail,
                 "created_at": e.created_at,
             }

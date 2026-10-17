@@ -22,10 +22,10 @@ export function initializeTelegram(): string | undefined {
           miniApp.setHeaderColor.isAvailable() &&
           miniApp.setHeaderColor.supports("rgb")
         )
-          miniApp.setHeaderColor("#090B11");
-        if (miniApp.setBgColor.isAvailable()) miniApp.setBgColor("#090B11");
+          miniApp.setHeaderColor("#050506");
+        if (miniApp.setBgColor.isAvailable()) miniApp.setBgColor("#050506");
         if (miniApp.setBottomBarColor.isAvailable())
-          miniApp.setBottomBarColor("#111520");
+          miniApp.setBottomBarColor("#121214");
       };
       syncChrome();
       themeParams.state.sub(syncChrome);

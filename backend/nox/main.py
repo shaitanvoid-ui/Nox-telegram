@@ -61,7 +61,7 @@ def create_app(settings: Settings | None = None, gateway: GatewayProtocol | None
             if close:
                 await close()
 
-    app = FastAPI(title="NOX API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Astra API", version="0.1.0", lifespan=lifespan)
     app.state.db, app.state.redis = db, redis
     app.state.settings, app.state.gateway = settings, selected_gateway
     app.add_middleware(

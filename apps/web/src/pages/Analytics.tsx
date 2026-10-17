@@ -1,4 +1,4 @@
-import { BarChart3, MessageSquare, ShieldCheck, Users } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, BarChart3 } from "lucide-react";
 import type { Analytics } from "../types";
 import { useChatQuery } from "../workspace";
 import { formatNumber } from "../api";
@@ -7,117 +7,151 @@ import {
   Empty,
   ErrorState,
   Loading,
-  Metric,
   PageHeader,
   SectionHeading,
 } from "../components/ui";
-import { ActivityChart, GrowthChart } from "../components/charts";
+import { ActivityChart } from "../components/dashboard/ActivityChart";
+import { GrowthChart } from "../components/charts";
+import "../styles/advanced-pages.css";
+
+const actionLabels: Record<string, string> = {
+  warn: "Предупреждения",
+  unwarn: "Снятие предупреждений",
+  mute: "Ограничения сообщений",
+  unmute: "Снятие ограничений",
+  ban: "Блокировки",
+  unban: "Разблокировки",
+  kick: "Исключения",
+};
 export function AnalyticsPage() {
   const query = useChatQuery<Analytics>("analytics");
-  if (query.isPending) return <Loading />;
+  if (query.isPending) return <Loading label="Собираем аналитику" />;
   if (query.isError)
     return (
       <ErrorState error={query.error} retry={() => void query.refetch()} />
     );
   const data = query.data;
   const max = Math.max(...data.moderation.map((item) => item.value), 1);
+  const first = data.growth[0]?.members;
+  const last = data.growth.at(-1)?.members;
+  const growthDelta =
+    data.growth.length > 1 && first !== undefined && last !== undefined
+      ? last - first
+      : null;
   return (
-    <div className="page-enter">
+    <div className="page-enter ap-page">
       <PageHeader
-        eyebrow="COMMUNITY INSIGHTS"
-        title="За цифрами — люди"
-        description="Понимайте динамику сообщества и принимайте решения на основе данных."
-        action={<Badge>Последние {data.activity.length} дней</Badge>}
+        eyebrow="04 / COMMUNITY DATA"
+        title="Аналитика"
+        description="Динамика сообщества в деталях. Все значения — из агрегатов вашего чата."
+        action={
+          <Badge>
+            {data.activity.length
+              ? `${data.activity.length} дней`
+              : "Нет данных за период"}
+          </Badge>
+        }
       />
-      <div className="metrics-grid analytics-metrics">
-        <Metric
-          label="Сообщения"
-          value={formatNumber(data.summary.messages)}
-          icon={<MessageSquare size={18} />}
-          note="В выбранном периоде"
-        />
-        <Metric
-          label="Нарушения"
-          value={formatNumber(data.summary.violations)}
-          icon={<ShieldCheck size={18} />}
-          note="Зарегистрировано движком"
-          color="amber"
-        />
-        <Metric
-          label="Участники"
-          value={
-            data.growth.length ? formatNumber(data.growth.at(-1)!.members) : "—"
-          }
-          icon={<Users size={18} />}
-          note="По последнему агрегату"
-          color="cyan"
-        />
-      </div>
-      <div className="analytics-grid">
-        <section className="panel">
-          <SectionHeading
-            title="Динамика активности"
-            meta="Сообщения и нарушения"
-          />
-          <ActivityChart data={data.activity} />
-        </section>
-        <section className="panel">
-          <SectionHeading title="Рост сообщества" meta="Участники по дням" />
-          <>
-            {data.growth.length ? (
-              <GrowthChart data={data.growth} />
+      <dl className="ap-stat-strip panel">
+        <div>
+          <dt>Сообщения</dt>
+          <dd>{formatNumber(data.summary.messages)}</dd>
+          <span>за выбранный период</span>
+        </div>
+        <div>
+          <dt>Нарушения</dt>
+          <dd>{formatNumber(data.summary.violations)}</dd>
+          <span>зафиксировано движком</span>
+        </div>
+        <div>
+          <dt>Участники</dt>
+          <dd>{last === undefined ? "—" : formatNumber(last)}</dd>
+          <span>
+            {growthDelta === null ? (
+              "нет данных для сравнения"
             ) : (
-              <Empty
-                title="Снимки участников ещё не накоплены"
-                description="Динамика появится после получения реальных снимков сообщества. Отсутствие данных не означает нулевой рост."
-              />
+              <>
+                {growthDelta >= 0 ? (
+                  <ArrowUpRight size={14} />
+                ) : (
+                  <ArrowDownRight size={14} />
+                )}
+                {growthDelta > 0 ? "+" : ""}
+                {formatNumber(growthDelta)} за период
+              </>
             )}
-          </>
+          </span>
+        </div>
+      </dl>
+      <section className="panel ap-chart-panel">
+        <SectionHeading
+          title="Пульс сообщества"
+          meta="Сообщения и нарушения. Две независимые шкалы."
+        />
+        <ActivityChart data={data.activity} />
+      </section>
+      <div className="ap-analytics-grid">
+        <section className="panel ap-chart-panel">
+          <SectionHeading
+            title="Рост сообщества"
+            meta="Снимки количества участников по дням"
+          />
+          {data.growth.length ? (
+            <GrowthChart data={data.growth} />
+          ) : (
+            <Empty
+              title="Пока без снимков"
+              description="График появится после накопления данных об участниках. Отсутствие снимков не означает нулевой рост."
+            />
+          )}
+        </section>
+        <section className="panel ap-distribution">
+          <SectionHeading
+            title="Действия модерации"
+            meta="Распределение за период"
+          />
+          <div className="ap-distribution-total">
+            <strong>
+              {formatNumber(
+                data.moderation.reduce((total, item) => total + item.value, 0),
+              )}
+            </strong>
+            <span>всего действий</span>
+          </div>
+          {!data.moderation.length ? (
+            <Empty
+              title="Действий пока нет"
+              description="Распределение появится после первых решений модерации."
+            />
+          ) : (
+            <ul>
+              {data.moderation.map((item, index) => (
+                <li key={item.label}>
+                  <div>
+                    <span>{actionLabels[item.label] ?? item.label}</span>
+                    <strong>{formatNumber(item.value)}</strong>
+                  </div>
+                  <span className="ap-distribution-track">
+                    <i
+                      style={{
+                        width: `${(Math.max(0, item.value) / max) * 100}%`,
+                        opacity: Math.max(0.35, 1 - index * 0.1),
+                      }}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
-      <section className="panel moderation-distribution">
-        <SectionHeading
-          title="Структура модерации"
-          meta="Распределение зарегистрированных действий"
-        >
-          <BarChart3 size={20} className="muted" />
-        </SectionHeading>
-        {!data.moderation.length ? (
-          <Empty
-            title="Недостаточно данных"
-            description="Распределение появится после первых действий модерации."
-          />
-        ) : (
-          data.moderation.map((item, index) => (
-            <div className="distribution-row" key={item.label}>
-              <span>
-                {{
-                  warn: "Предупреждения",
-                  mute: "Ограничения сообщений",
-                  ban: "Блокировки",
-                  kick: "Исключения",
-                }[item.label] ?? item.label}
-              </span>
-              <div>
-                <i
-                  style={{
-                    width: `${(item.value / max) * 100}%`,
-                    background: ["#8585ff", "#63d6e8", "#e9ad6b", "#ec8291"][
-                      index % 4
-                    ],
-                  }}
-                />
-              </div>
-              <strong>{formatNumber(item.value)}</strong>
-            </div>
-          ))
-        )}
-      </section>
-      <div className="data-note">
-        <BarChart3 size={15} />
-        {data.notice ??
-          "Агрегаты могут обновляться с задержкой. Демонстрационные данные помечены в верхней панели."}
-      </div>
+      <p className="ap-data-note">
+        <BarChart3 size={16} />
+        <span>
+          {data.notice ??
+            "Агрегаты могут обновляться с задержкой. Демонстрационные данные отмечены в верхней панели."}
+        </span>
+      </p>
     </div>
   );
 }

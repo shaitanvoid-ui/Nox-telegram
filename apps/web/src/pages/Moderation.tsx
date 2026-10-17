@@ -1,9 +1,16 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Plus, Search, ShieldCheck, Users } from "lucide-react";
-import { api, formatDate, formatNumber, json } from "../api";
+import { Link } from "react-router-dom";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Plus,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import { api, formatDate, formatNumber, json, statusNames } from "../api";
 import { useChatQuery, useWorkspace } from "../workspace";
 import type { Case, Member, Page } from "../types";
 import {
@@ -19,25 +26,47 @@ import {
   PageHeader,
 } from "../components/ui";
 import { CasesTable } from "../components/CasesTable";
+import "../styles/moderation-shield.css";
+
+const pageSize = 20;
+const moderationKinds = [
+  ["warn", "Предупреждение"],
+  ["mute", "Ограничить сообщения"],
+  ["ban", "Заблокировать"],
+  ["kick", "Исключить из чата"],
+  ["unwarn", "Снять предупреждение"],
+  ["unmute", "Разрешить сообщения"],
+  ["unban", "Разблокировать"],
+] as const;
+const roleNames: Record<string, string> = {
+  owner: "Владелец",
+  admin: "Администратор",
+  moderator: "Модератор",
+  member: "Участник",
+};
+
 export function ModerationPage() {
   const [tab, setTab] = useState<"cases" | "members">("cases");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [create, setCreate] = useState(false);
   const [revoke, setRevoke] = useState<Case | null>(null);
-  const [notice, setNotice] = useState("");
-  const navigate = useNavigate();
+  const [notice, setNotice] = useState<{
+    message: string;
+    error: boolean;
+  } | null>(null);
+  const { chat, token, mode } = useWorkspace();
+  const canModerate = ["owner", "admin", "moderator"].includes(chat.role);
   const cases = useChatQuery<Page<Case>>("cases", {
-    limit: 20,
-    offset: page * 20,
-    search,
+    limit: pageSize,
+    offset: page * pageSize,
+    search: tab === "cases" ? search : "",
   });
   const members = useChatQuery<Page<Member>>("members", {
-    limit: 20,
-    offset: page * 20,
-    search,
+    limit: pageSize,
+    offset: tab === "members" ? page * pageSize : 0,
+    search: tab === "members" ? search : "",
   });
-  const { chat, token, mode } = useWorkspace();
   const client = useQueryClient();
   const revocation = useMutation({
     mutationFn: (item: Case) =>
@@ -46,100 +75,116 @@ export function ModerationPage() {
         token,
         json("POST", {}),
       ),
-    onSuccess: () => {
+    onSuccess: (result) => {
       setRevoke(null);
-      setNotice(
-        mode === "demo"
-          ? "Наказание отменено в демонстрационной базе."
-          : "Запрос на отмену принят. Итоговый статус доступен в истории.",
-      );
+      setNotice(caseOutcome(result, mode, true));
       void client.invalidateQueries({ queryKey: ["chat", chat.id] });
     },
+    onError: () =>
+      void client.invalidateQueries({ queryKey: ["chat", chat.id, "cases"] }),
   });
-  const filteredCases =
-    cases.data?.items.filter((item) =>
-      `${item.target_name} ${item.reason} ${item.target_user_id}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    ) ?? [];
-  const filteredMembers =
-    members.data?.items.filter((item) =>
-      `${item.first_name} ${item.username ?? ""} ${item.id}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    ) ?? [];
+  const activeQuery = tab === "cases" ? cases : members;
+  const total = activeQuery.data?.total ?? 0;
+  function changeTab(value: "cases" | "members") {
+    setTab(value);
+    setPage(0);
+    setSearch("");
+  }
   return (
-    <div className="page-enter">
+    <div className="moderation-page page-enter">
       <PageHeader
-        eyebrow="MODERATION CENTER"
-        title="Порядок без шума"
-        description="Участники, решения и прозрачная история каждого действия."
+        eyebrow="01 / MODERATION"
+        title="Модерация"
+        description="Каждое действие — с причиной. Каждое решение — в истории."
         action={
-          <Button onClick={() => setCreate(true)}>
-            <Plus size={17} />
+          <Button disabled={!canModerate} onClick={() => setCreate(true)}>
+            <Plus size={18} />
             Новое действие
+            <ArrowUpRight size={17} />
           </Button>
         }
       />
-      {notice && <Notice>{notice}</Notice>}
-      <div className="moderation-overview">
-        <div className="small-stat">
-          <span className="quick-icon violet">
-            <ShieldCheck size={22} />
+      {notice && <Notice error={notice.error}>{notice.message}</Notice>}
+      {!canModerate && (
+        <Notice>У вашей роли нет права выполнять действия модерации.</Notice>
+      )}
+      <div className="moderation-intro">
+        <div className="moderation-figure">
+          <span className="moderation-figure-label">
+            <ShieldCheck size={16} />
+            {tab === "cases" && search
+              ? "Действий найдено"
+              : "Действий в истории"}
           </span>
-          <div>
-            <strong>{formatNumber(cases.data?.total ?? 0)}</strong>
-            <span>действий в истории</span>
-          </div>
+          <strong>{cases.data ? formatNumber(cases.data.total) : "—"}</strong>
+          <span>Сохранённый контекст решений</span>
         </div>
-        <div className="small-stat">
-          <span className="quick-icon cyan">
-            <Users size={22} />
+        <div className="moderation-figure">
+          <span className="moderation-figure-label">
+            <Users size={16} />
+            {tab === "members" && search
+              ? "Участников найдено"
+              : "Участников в базе"}
           </span>
-          <div>
-            <strong>{formatNumber(members.data?.total ?? 0)}</strong>
-            <span>участников в базе NOX</span>
-          </div>
+          <strong>
+            {members.data ? formatNumber(members.data.total) : "—"}
+          </strong>
+          <span>По событиям Telegram</span>
         </div>
-        <button className="appeals-link" onClick={() => navigate("/appeals")}>
+        <Link className="moderation-appeals" to="/appeals">
+          <span className="moderation-appeals-icon">
+            <ArrowDownLeft size={23} />
+          </span>
           <span>
-            У каждого решения есть контекст.
+            <small>ОБРАТНАЯ СВЯЗЬ</small>
             <strong>Рассмотреть апелляции</strong>
+            <span>Вернуться к решению с новым контекстом</span>
           </span>
-          <ArrowUpRight size={20} />
-        </button>
+          <ArrowUpRight size={21} />
+        </Link>
       </div>
-      <section className="panel">
-        <div className="list-toolbar">
-          <div className="tabs" role="tablist" aria-label="Данные модерации">
+      <section
+        className="moderation-workbench panel"
+        aria-label="Данные модерации"
+      >
+        <div className="moderation-toolbar">
+          <div
+            className="moderation-tabs"
+            role="tablist"
+            aria-label="Данные модерации"
+          >
             <button
+              type="button"
+              id="moderation-cases-tab"
               role="tab"
               aria-selected={tab === "cases"}
-              className={tab === "cases" ? "active" : ""}
-              onClick={() => {
-                setTab("cases");
-                setPage(0);
-              }}
+              aria-controls="moderation-content"
+              className={tab === "cases" ? "is-selected" : ""}
+              onClick={() => changeTab("cases")}
             >
-              История действий<Badge>{cases.data?.total ?? "—"}</Badge>
+              История действий
             </button>
             <button
+              type="button"
+              id="moderation-members-tab"
               role="tab"
               aria-selected={tab === "members"}
-              className={tab === "members" ? "active" : ""}
-              onClick={() => {
-                setTab("members");
-                setPage(0);
-              }}
+              aria-controls="moderation-content"
+              className={tab === "members" ? "is-selected" : ""}
+              onClick={() => changeTab("members")}
             >
               Участники
             </button>
           </div>
-          <div className="search-input">
-            <Search size={16} />
+          <div className="moderation-search">
+            <Search size={17} aria-hidden="true" />
             <input
               aria-label="Поиск участников и действий"
-              placeholder="Поиск по имени или причине"
+              placeholder={
+                tab === "cases"
+                  ? "Поиск по причине действия"
+                  : "Поиск по имени участника"
+              }
               maxLength={100}
               value={search}
               onChange={(e) => {
@@ -149,105 +194,112 @@ export function ModerationPage() {
             />
           </div>
         </div>
-        {tab === "cases" ? (
-          cases.isPending ? (
-            <Loading />
-          ) : cases.isError ? (
+        <div
+          id="moderation-content"
+          role="tabpanel"
+          aria-labelledby={`moderation-${tab}-tab`}
+        >
+          {tab === "cases" ? (
+            cases.isPending ? (
+              <Loading label="Загружаем историю" />
+            ) : cases.isError ? (
+              <ErrorState
+                error={cases.error}
+                retry={() => void cases.refetch()}
+              />
+            ) : !cases.data.items.length && search ? (
+              <Empty
+                title="Ничего не найдено"
+                description="Попробуйте другую причину или очистите строку поиска."
+              />
+            ) : (
+              <CasesTable
+                items={cases.data.items}
+                onRevoke={
+                  canModerate
+                    ? (item) => {
+                        revocation.reset();
+                        setRevoke(item);
+                      }
+                    : undefined
+                }
+                pending={revocation.isPending}
+              />
+            )
+          ) : members.isPending ? (
+            <Loading label="Загружаем участников" />
+          ) : members.isError ? (
             <ErrorState
-              error={cases.error}
-              retry={() => void cases.refetch()}
+              error={members.error}
+              retry={() => void members.refetch()}
             />
-          ) : !filteredCases.length && search ? (
+          ) : !members.data.items.length ? (
             <Empty
-              title="Ничего не найдено"
-              description="Попробуйте другое имя, ID участника или причину действия."
+              title="Участники не найдены"
+              description={
+                search
+                  ? "Попробуйте другое имя или очистите строку поиска."
+                  : "Astra добавляет участников по мере получения событий Telegram."
+              }
             />
           ) : (
-            <CasesTable
-              items={filteredCases}
-              onRevoke={setRevoke}
-              pending={revocation.isPending}
-            />
-          )
-        ) : members.isPending ? (
-          <Loading />
-        ) : members.isError ? (
-          <ErrorState
-            error={members.error}
-            retry={() => void members.refetch()}
-          />
-        ) : !filteredMembers.length ? (
-          <Empty
-            title="Участники не найдены"
-            description="NOX добавляет участников в базу по мере получения событий Telegram."
-          />
-        ) : (
-          <div className="members-list">
-            {filteredMembers.map((member) => (
-              <div className="member-row" key={member.id}>
-                <Avatar name={member.first_name} />
-                <div className="member-name">
-                  <strong>{member.first_name}</strong>
-                  <span>
-                    {member.username
-                      ? `@${member.username}`
-                      : `ID ${member.id}`}
-                  </span>
+            <div className="moderation-members">
+              {members.data.items.map((member) => (
+                <div className="moderation-member" key={member.id}>
+                  <Avatar name={member.first_name} />
+                  <div className="moderation-member-name">
+                    <strong>{member.first_name}</strong>
+                    <span>
+                      {member.username
+                        ? `@${member.username}`
+                        : `ID ${member.id}`}
+                    </span>
+                  </div>
+                  <Badge tone={member.role === "member" ? "muted" : "violet"}>
+                    {roleNames[member.role] ?? member.role}
+                  </Badge>
+                  <time dateTime={member.joined_at}>
+                    {formatDate(member.joined_at)}
+                  </time>
                 </div>
-                <Badge tone={member.role === "member" ? "muted" : "violet"}>
-                  {{
-                    owner: "Владелец",
-                    admin: "Администратор",
-                    moderator: "Модератор",
-                    member: "Участник",
-                  }[member.role] ?? member.role}
-                </Badge>
-                <span className="member-joined">
-                  {formatDate(member.joined_at)}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+        {!activeQuery.isError && !activeQuery.isPending && (
+          <div className="moderation-footer">
+            <span>
+              {total
+                ? `${formatNumber(Math.min(page * pageSize + 1, total))}–${formatNumber(Math.min((page + 1) * pageSize, total))} из ${formatNumber(total)}`
+                : "Нет записей"}
+            </span>
+            <div className="moderation-pagination">
+              <Button
+                variant="ghost"
+                disabled={page === 0}
+                onClick={() => setPage((value) => value - 1)}
+              >
+                Назад
+              </Button>
+              <span aria-label={`Страница ${page + 1}`}>{page + 1}</span>
+              <Button
+                variant="ghost"
+                disabled={(page + 1) * pageSize >= total}
+                onClick={() => setPage((value) => value + 1)}
+              >
+                Далее
+              </Button>
+            </div>
           </div>
         )}
-        <div className="table-footer">
-          {search
-            ? `Найдено: ${tab === "cases" ? filteredCases.length : filteredMembers.length}`
-            : "История доступна только администраторам этого сообщества."}
-          <div className="pagination">
-            <Button
-              variant="ghost"
-              disabled={page === 0}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              Назад
-            </Button>
-            <span>{page + 1}</span>
-            <Button
-              variant="ghost"
-              disabled={
-                (page + 1) * 20 >=
-                (tab === "cases"
-                  ? (cases.data?.total ?? 0)
-                  : (members.data?.total ?? 0))
-              }
-              onClick={() => setPage((value) => value + 1)}
-            >
-              Далее
-            </Button>
-          </div>
-        </div>
       </section>
       {create && (
         <CreateCase
           members={members.data?.items ?? []}
           onClose={() => setCreate(false)}
-          onCreated={() => {
+          onCreated={(result) => {
             setCreate(false);
-            setNotice(
-              mode === "demo"
-                ? "Действие сохранено в демонстрационной базе. Telegram не подключён."
-                : "Действие зарегистрировано. Проверьте статус выполнения в истории.",
-            );
+            setNotice(caseOutcome(result, mode));
           }}
         />
       )}
@@ -255,17 +307,23 @@ export function ModerationPage() {
         <Modal
           title="Отменить наказание?"
           description={`Участник: ${revoke.target_name}. Причина: ${revoke.reason}`}
-          onClose={() => setRevoke(null)}
+          onClose={() => {
+            if (!revocation.isPending) setRevoke(null);
+          }}
         >
-          <p className="muted modal-copy">
-            NOX проверит ваши полномочия и отправит запрос на отмену. История
-            действия сохранится.
+          <p className="moderation-modal-copy">
+            Astra повторно проверит ваши полномочия. Отмена сохранится в
+            истории, а результат появится после ответа Telegram.
           </p>
           {revocation.isError && (
             <Notice error>{revocation.error.message}</Notice>
           )}
           <div className="modal-actions">
-            <Button variant="secondary" onClick={() => setRevoke(null)}>
+            <Button
+              variant="secondary"
+              disabled={revocation.isPending}
+              onClick={() => setRevoke(null)}
+            >
               Назад
             </Button>
             <Button
@@ -280,6 +338,30 @@ export function ModerationPage() {
     </div>
   );
 }
+
+function caseOutcome(result: Case, mode: string, revoking = false) {
+  const confirmed = revoking
+    ? result.status === "revoked"
+    : ["applied", "active"].includes(result.status);
+  if (confirmed) {
+    return {
+      message: revoking
+        ? mode === "demo"
+          ? "Наказание отменено в демонстрационной базе."
+          : "Наказание отменено. История действия сохранена."
+        : mode === "demo"
+          ? "Действие сохранено в демонстрационной базе. Telegram не подключён."
+          : "Действие выполнено. Результат доступен в истории.",
+      error: false,
+    };
+  }
+  const label = statusNames[result.status] ?? result.status;
+  return {
+    message: `${revoking ? "Отмена не подтверждена" : "Действие не подтверждено"}. Статус: ${label}. Проверьте историю перед повторной отправкой.`,
+    error: true,
+  };
+}
+
 function CreateCase({
   members,
   onClose,
@@ -287,7 +369,7 @@ function CreateCase({
 }: {
   members: Member[];
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (result: Case) => void;
 }) {
   const { chat, token } = useWorkspace();
   const client = useQueryClient();
@@ -295,6 +377,7 @@ function CreateCase({
   const [target, setTarget] = useState("");
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState("60");
+  const [validation, setValidation] = useState("");
   const [key] = useState(() => crypto.randomUUID());
   const mutation = useMutation({
     mutationFn: () =>
@@ -305,30 +388,47 @@ function CreateCase({
           target_user_id: Number(target),
           kind,
           reason: reason.trim(),
-          ...(kind === "mute" || kind === "ban"
-            ? { duration_minutes: Number(duration) || null }
+          ...(["mute", "ban"].includes(kind)
+            ? {
+                duration_minutes:
+                  kind === "ban" && duration === "0" ? null : Number(duration),
+              }
             : {}),
           idempotency_key: key,
         }),
       ),
-    onSuccess: () => {
+    onSuccess: (result) => {
       void client.invalidateQueries({ queryKey: ["chat", chat.id] });
-      onCreated();
+      onCreated(result);
     },
+    onError: () =>
+      void client.invalidateQueries({ queryKey: ["chat", chat.id, "cases"] }),
   });
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (!Number.isSafeInteger(Number(target)) || Number(target) <= 0) {
+      setValidation("Укажите корректный Telegram ID участника.");
+      return;
+    }
+    if (reason.trim().length < 3) {
+      setValidation("Укажите понятную причину: минимум 3 символа.");
+      return;
+    }
+    setValidation("");
     mutation.mutate();
   }
   return (
     <Modal
       title="Новое действие"
-      description="Осознанная модерация начинается с понятной причины."
-      onClose={onClose}
+      description="Сначала контекст. Затем решение."
+      onClose={() => {
+        if (!mutation.isPending) onClose();
+      }}
     >
       <form onSubmit={submit} className="form-stack">
         <Field label="Участник">
           <select
+            disabled={mutation.isPending}
             value={
               members.some((member) => String(member.id) === target)
                 ? target
@@ -346,7 +446,7 @@ function CreateCase({
         </Field>
         <Field
           label="Telegram ID участника"
-          hint="Можно указать ID вручную. Сервер проверит доступ и ограничения роли."
+          hint="Можно указать ID вручную. Сервер проверит чат, полномочия и роль участника."
         >
           <input
             required
@@ -354,23 +454,34 @@ function CreateCase({
             min={1}
             step={1}
             value={target}
+            disabled={mutation.isPending}
             onChange={(e) => setTarget(e.target.value)}
           />
         </Field>
         <Field label="Действие">
-          <select value={kind} onChange={(e) => setKind(e.target.value)}>
-            <option value="warn">Предупреждение</option>
-            <option value="mute">Ограничить сообщения</option>
-            <option value="ban">Заблокировать</option>
-            <option value="kick">Исключить из чата</option>
+          <select
+            disabled={mutation.isPending}
+            value={kind}
+            onChange={(e) => {
+              setKind(e.target.value);
+              if (e.target.value === "mute" && duration === "0")
+                setDuration("60");
+            }}
+          >
+            {moderationKinds.map(([value, label]) => (
+              <option value={value} key={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </Field>
         {["mute", "ban"].includes(kind) && (
           <Field
             label="Длительность"
-            hint="Для временных действий минимум 1 минута."
+            hint="Временное ограничение снимает Telegram по истечении срока."
           >
             <select
+              disabled={mutation.isPending}
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             >
@@ -391,14 +502,21 @@ function CreateCase({
             minLength={3}
             maxLength={500}
             rows={3}
-            placeholder="Какое правило сообщества нарушено?"
+            disabled={mutation.isPending}
+            placeholder="Укажите причину действия"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           />
         </Field>
+        {validation && <Notice error>{validation}</Notice>}
         {mutation.isError && <Notice error>{mutation.error.message}</Notice>}
         <div className="modal-actions">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={mutation.isPending}
+            onClick={onClose}
+          >
             Отмена
           </Button>
           <Button type="submit" loading={mutation.isPending}>

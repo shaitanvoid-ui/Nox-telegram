@@ -12,66 +12,60 @@ import {
 } from "recharts";
 import type { MouseHandlerDataParam } from "recharts";
 import type { ActivityPoint } from "../../types";
-import "./nox-dashboard.css";
+import "./activity-chart.css";
 
 interface ActivityChartProps {
   data: ActivityPoint[];
 }
-
 const number = new Intl.NumberFormat("ru-RU");
-const compactNumber = new Intl.NumberFormat("ru-RU", {
+const compact = new Intl.NumberFormat("ru-RU", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
-const tick = { fill: "#929CB2", fontSize: 12, fontFamily: "Inter, sans-serif" };
-const margin = { top: 8, right: 10, left: 0, bottom: 0 };
-const dayMonth = new Intl.DateTimeFormat("ru-RU", {
+const dateFormat = new Intl.DateTimeFormat("ru-RU", {
   day: "numeric",
   month: "short",
   timeZone: "UTC",
 });
+const tick = { fill: "#8b8b95", fontSize: 12, fontFamily: "Inter, sans-serif" };
+const margin = { top: 8, right: 12, left: 0, bottom: 0 };
 
 function displayDay(label: string) {
   const match = /^(\d{2})-(\d{2})$/.exec(label);
   if (!match) return label;
-  const month = Number(match[1]);
-  const day = Number(match[2]);
+  const month = Number(match[1]),
+    day = Number(match[2]);
   const date = new Date(Date.UTC(2000, month - 1, day));
-  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day)
-    return label;
-  return dayMonth.format(date);
+  return date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+    ? dateFormat.format(date)
+    : label;
 }
 
 function readout(point: ActivityPoint) {
   return `${displayDay(point.label)}: сообщения — ${number.format(point.messages)}, нарушения — ${number.format(point.violations)}`;
 }
 
-/** Shared days, independent scales: a few violations stay visible next to thousands of messages. */
+/** Two independent quantities share days, while each keeps an honest, readable scale. */
 export function ActivityChart({ data }: ActivityChartProps) {
   const id = useId().replace(/:/g, "");
   const [selected, setSelected] = useState<number | null>(null);
-
-  if (!data.length) {
+  if (!data.length)
     return (
-      <div className="nox-chart-theme nox-chart-empty">
-        <span className="nox-chart-empty-mark" aria-hidden="true">
-          —
-        </span>
+      <div className="nd-chart nd-chart-empty">
+        <span aria-hidden="true">—</span>
         <p>Пока нет данных за период</p>
         <span>Активность появится после обработки сообщений.</span>
       </div>
     );
-  }
-
   const index = Math.min(
     Math.max(selected ?? data.length - 1, 0),
     data.length - 1,
   );
   const current = data[index];
   const maxViolations = Math.max(3, ...data.map((point) => point.violations));
-  const syncId = `nox-activity-${id}`;
-  const gradientId = `nox-activity-fill-${id}`;
-  const updateSelection = (state: MouseHandlerDataParam) => {
+  const syncId = `nd-chart-${id}`,
+    gradientId = `nd-fill-${id}`;
+  function updateSelection(state: MouseHandlerDataParam) {
     if (
       state.activeTooltipIndex === null ||
       state.activeTooltipIndex === undefined
@@ -80,35 +74,31 @@ export function ActivityChart({ data }: ActivityChartProps) {
     const next = Number(state.activeTooltipIndex);
     if (Number.isInteger(next) && next >= 0 && next < data.length)
       setSelected(next);
-  };
-
+  }
   return (
-    <div className="nox-chart-theme nox-activity-chart">
-      <div className="nox-chart-readout">
-        <span className="nox-chart-date">{displayDay(current.label)}</span>
-        <span className="nox-chart-value">
-          <i
-            className="nox-data-dot nox-data-dot--messages"
-            aria-hidden="true"
-          />
+    <div className="nd-chart">
+      <div className="nd-chart-readout">
+        <div className="nd-chart-metric">
+          <span>
+            <i className="nd-chart-dot" aria-hidden="true" />
+            Сообщения
+          </span>
           <strong>{number.format(current.messages)}</strong>
-          <span>сообщений</span>
-        </span>
-        <span className="nox-chart-value">
-          <i
-            className="nox-data-dot nox-data-dot--violations"
-            aria-hidden="true"
-          />
+        </div>
+        <div className="nd-chart-metric nd-chart-metric-secondary">
+          <span>
+            <i className="nd-chart-dot nd-chart-dot-amber" aria-hidden="true" />
+            Нарушения
+          </span>
           <strong>{number.format(current.violations)}</strong>
-          <span>нарушений</span>
-        </span>
+        </div>
+        <span className="nd-chart-date">{displayDay(current.label)}</span>
       </div>
-
-      <div className="nox-chart-lane-label">
+      <div className="nd-chart-track-heading">
         <span>Сообщения в день</span>
         <span>сообщения</span>
       </div>
-      <div className="nox-message-lane" aria-hidden="true">
+      <div className="nd-chart-messages" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <ComposedChart
             data={data}
@@ -121,66 +111,52 @@ export function ActivityChart({ data }: ActivityChartProps) {
           >
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8585FF" stopOpacity={0.22} />
-                <stop offset="100%" stopColor="#8585FF" stopOpacity={0.015} />
+                <stop offset="0%" stopColor="#a292ff" stopOpacity={0.22} />
+                <stop offset="100%" stopColor="#a292ff" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
               vertical={false}
-              stroke="rgba(146,156,178,.13)"
-              strokeDasharray="3 5"
+              stroke="rgba(255,255,255,.075)"
+              strokeDasharray="2 6"
             />
             <XAxis dataKey="label" scale="band" hide />
             <YAxis
-              width={64}
+              width={56}
               tick={tick}
               tickLine={false}
               axisLine={false}
               tickCount={4}
               allowDecimals={false}
               domain={[0, "auto"]}
-              tickFormatter={(value) => compactNumber.format(Number(value))}
+              tickFormatter={(value) => compact.format(Number(value))}
             />
-            <Tooltip
-              content={() => null}
-              cursor={{
-                stroke: "#8585FF",
-                strokeOpacity: 0.45,
-                strokeDasharray: "3 4",
-              }}
-            />
+            <Tooltip content={() => null} cursor={false} />
             <ReferenceLine
               x={current.label}
-              stroke="#8585FF"
-              strokeOpacity={0.55}
-              strokeDasharray="3 4"
+              stroke="#d0c9ff"
+              strokeOpacity={0.4}
+              strokeDasharray="3 5"
             />
             <Area
-              name="Сообщения"
               dataKey="messages"
+              name="Сообщения"
               type="monotone"
-              stroke="#A2A0FF"
+              stroke="#b8aaff"
               strokeWidth={2.5}
               fill={`url(#${gradientId})`}
               isAnimationActive={false}
-              dot={data.length === 1 ? { fill: "#A2A0FF", r: 4 } : false}
-              activeDot={{ r: 4, stroke: "#111520", strokeWidth: 3 }}
+              dot={data.length === 1 ? { fill: "#b8aaff", r: 4 } : false}
+              activeDot={{ r: 4, stroke: "#111114", strokeWidth: 3 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-
-      <div className="nox-chart-lane-label nox-chart-lane-label--violations">
-        <span>
-          <i
-            className="nox-data-dot nox-data-dot--violations"
-            aria-hidden="true"
-          />
-          Нарушения в день
-        </span>
+      <div className="nd-chart-track-heading nd-chart-track-heading-secondary">
+        <span>Нарушения в день</span>
         <span>своя шкала: 0–{number.format(maxViolations)}</span>
       </div>
-      <div className="nox-violation-lane" aria-hidden="true">
+      <div className="nd-chart-violations" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <ComposedChart
             data={data}
@@ -193,8 +169,8 @@ export function ActivityChart({ data }: ActivityChartProps) {
           >
             <CartesianGrid
               vertical={false}
-              stroke="rgba(146,156,178,.13)"
-              strokeDasharray="3 5"
+              stroke="rgba(255,255,255,.075)"
+              strokeDasharray="2 6"
             />
             <XAxis
               dataKey="label"
@@ -209,7 +185,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
               dy={9}
             />
             <YAxis
-              width={64}
+              width={56}
               tick={tick}
               tickLine={false}
               axisLine={false}
@@ -217,33 +193,29 @@ export function ActivityChart({ data }: ActivityChartProps) {
               ticks={[0, Math.ceil(maxViolations / 2), maxViolations]}
               allowDecimals={false}
             />
-            <Tooltip
-              content={() => null}
-              cursor={{ fill: "#F5B454", fillOpacity: 0.06 }}
-            />
+            <Tooltip content={() => null} cursor={false} />
             <ReferenceLine
               x={current.label}
-              stroke="#F5B454"
-              strokeOpacity={0.55}
-              strokeDasharray="3 4"
+              stroke="#b8aaff"
+              strokeOpacity={0.25}
+              strokeDasharray="3 5"
             />
             <Bar
-              name="Нарушения"
               dataKey="violations"
-              fill="#F5B454"
-              fillOpacity={0.8}
+              name="Нарушения"
+              fill="#d9ad79"
+              fillOpacity={0.9}
               radius={[3, 3, 0, 0]}
-              maxBarSize={20}
+              maxBarSize={12}
               isAnimationActive={false}
             />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-
-      <div className="nox-chart-scrubber">
-        <label htmlFor={`nox-day-${id}`}>День на графике</label>
+      <div className="nd-chart-scrubber">
+        <label htmlFor={`nd-day-${id}`}>День на графике</label>
         <input
-          id={`nox-day-${id}`}
+          id={`nd-day-${id}`}
           type="range"
           min={0}
           max={data.length - 1}
@@ -253,12 +225,11 @@ export function ActivityChart({ data }: ActivityChartProps) {
           aria-valuetext={readout(current)}
           onChange={(event) => setSelected(Number(event.target.value))}
         />
-        <output htmlFor={`nox-day-${id}`}>
+        <output htmlFor={`nd-day-${id}`}>
           {index + 1} / {data.length}
         </output>
       </div>
-
-      <table className="nox-screen-reader-only">
+      <table className="sr-only">
         <caption>Сообщения и нарушения по дням</caption>
         <thead>
           <tr>

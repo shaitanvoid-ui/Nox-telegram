@@ -1,7 +1,7 @@
 [project]
 name = "nox-telegram"
 version = "0.1.0"
-description = "NOX — Next Generation Telegram Moderation & Community Management Platform"
+description = "Astra — Next Generation Telegram Moderation & Community Management Platform"
 requires-python = ">=3.12,<3.14"
 dependencies = [
   "fastapi>=0.135,<0.136", "uvicorn[standard]>=0.41,<0.42",

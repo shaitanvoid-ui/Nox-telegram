@@ -1,12 +1,12 @@
 import {
-  ArrowDownRight,
+  ArrowDownLeft,
   ArrowUpRight,
   Check,
   ChevronRight,
-  Clock3,
   LockKeyhole,
   RefreshCw,
-  Shield,
+  ShieldCheck,
+  Users,
   Workflow,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -14,8 +14,8 @@ import type { ReactNode } from "react";
 import { caseNames, formatDate, formatNumber, statusNames } from "../../api";
 import type { Case, Dashboard } from "../../types";
 import { ActivityChart } from "./ActivityChart";
-import { ShieldRing } from "./ShieldRing";
-import "./nox-dashboard.css";
+import "./dashboard.css";
+import "./dashboard-responsive.css";
 
 export interface DashboardViewProps {
   communityName: string;
@@ -25,17 +25,14 @@ export interface DashboardViewProps {
   onRetry?: () => void;
 }
 
-function headline(enabled: number, total: number) {
-  if (!total) return "Модули защиты не настроены";
-  if (!enabled) return "Все модули защиты выключены";
-  if (enabled === total) return "Включены все модули защиты";
-  return `Включено ${enabled} из ${total} модулей защиты`;
-}
-
-const today = new Intl.DateTimeFormat("ru-RU", {
+const day = new Intl.DateTimeFormat("ru-RU", {
   day: "numeric",
   month: "long",
 });
+
+function count(value: number) {
+  return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
 
 export function DashboardView({
   communityName,
@@ -48,15 +45,12 @@ export function DashboardView({
   if (status === "error" || !data) {
     const denied = errorCode === 401 || errorCode === 403;
     return (
-      <div className="nox-dashboard">
-        <section className="nox-dashboard-state" role="alert">
-          <span className="nox-state-icon">
-            {denied ? (
-              <LockKeyhole size={25} aria-hidden="true" />
-            ) : (
-              <RefreshCw size={25} aria-hidden="true" />
-            )}
+      <div className="nd-dashboard">
+        <section className="nd-state" role="alert">
+          <span className="nd-state-icon" aria-hidden="true">
+            {denied ? <LockKeyhole size={26} /> : <RefreshCw size={26} />}
           </span>
+          <p className="nd-kicker">ASTRA / ОБЗОР</p>
           <h1>
             {denied ? "Нет доступа к обзору" : "Не удалось загрузить обзор"}
           </h1>
@@ -68,9 +62,8 @@ export function DashboardView({
                 : "Проверьте соединение и повторите запрос."}
           </p>
           {!denied && onRetry && (
-            <button className="nox-button" onClick={onRetry}>
-              <RefreshCw size={16} aria-hidden="true" />
-              Повторить запрос
+            <button className="nd-primary" onClick={onRetry}>
+              Повторить запрос <RefreshCw size={16} aria-hidden="true" />
             </button>
           )}
         </section>
@@ -79,180 +72,189 @@ export function DashboardView({
   }
 
   const { stats, protection, activity, recent_cases } = data;
-  const total = Math.max(0, Math.floor(protection.total));
-  const enabled = Math.min(Math.max(0, Math.floor(protection.enabled)), total);
-  const enabledPercent = total ? Math.round((enabled / total) * 100) : null;
+  const total = count(protection.total);
+  const enabled = Math.min(count(protection.enabled), total);
 
   return (
-    <div className="nox-dashboard">
-      <div className="nox-overview-heading">
+    <div className="nd-dashboard">
+      <div className="nd-page-caption">
         <p>
-          <span className="nox-overview-marker" aria-hidden="true" />
-          Обзор сообщества
-          <span className="nox-overview-divider" aria-hidden="true">
-            /
-          </span>
-          <span className="nox-community-name">{communityName}</span>
+          <span aria-hidden="true" />
+          ПАНЕЛЬ СООБЩЕСТВА
         </p>
         <time dateTime={new Date().toISOString().slice(0, 10)}>
-          {today.format(new Date())}
+          {day.format(new Date())}
         </time>
       </div>
 
-      <section className="nox-hero" aria-labelledby="nox-dashboard-title">
-        <figure className="nox-hero-ring">
-          <ShieldRing enabled={enabled} total={total} />
-          <figcaption>модулей включено</figcaption>
-        </figure>
-        <div className="nox-hero-copy">
-          <span className="nox-eyebrow">
-            NOX SHIELD <span aria-hidden="true">/</span> КОНТУР ЗАЩИТЫ
-          </span>
-          <h1 id="nox-dashboard-title">{headline(enabled, total)}</h1>
-          <p>Управляйте модулями и правилами вашего сообщества.</p>
-          <Link to="/shield" className="nox-button">
-            Настроить Shield <ArrowUpRight size={16} aria-hidden="true" />
+      <section className="nd-hero" aria-labelledby="nd-title">
+        <picture className="nd-hero-art" aria-hidden="true">
+          <source
+            media="(max-width: 600px)"
+            srcSet="/images/nox-sculpture-mobile.webp"
+          />
+          <img
+            src="/images/nox-sculpture.webp"
+            alt=""
+            width="1536"
+            height="1024"
+            fetchPriority="high"
+          />
+        </picture>
+        <div className="nd-hero-wash" aria-hidden="true" />
+        <div className="nd-hero-copy">
+          <span className="nd-kicker">ASTRA / COMMUNITY CONTROL</span>
+          <h1 id="nd-title">
+            Ваше <br />
+            сообщество.
+          </h1>
+          <p className="nd-community">{communityName}</p>
+          <Link to="/moderation" className="nd-primary">
+            Управлять{" "}
+            <span>
+              <ArrowUpRight size={18} aria-hidden="true" />
+            </span>
           </Link>
         </div>
-        <div className="nox-hero-index" aria-hidden="true">
-          <span>01</span>
-          <i />
-          ОБЗОР
-        </div>
+        <span className="nd-hero-coordinate" aria-hidden="true">
+          CONNECTED BY ASTRA
+        </span>
       </section>
 
-      <dl className="nox-metrics">
-        <Metric
-          index="01"
-          label="Участники"
-          value={formatNumber(stats.members)}
-          note="В сообществе"
-        />
-        <Metric
-          index="02"
-          label="Сообщения сегодня"
-          value={formatNumber(stats.messages_today)}
-          note="За текущие сутки"
-        />
-        <Metric
-          index="03"
-          label="Действия модерации"
-          value={formatNumber(stats.actions_today)}
-          note="За текущие сутки"
-        />
-        <Metric
-          index="04"
-          label="Включено модулей"
-          value={
-            enabledPercent === null ? (
-              "—"
-            ) : (
-              <>
-                {enabledPercent}
-                <span className="nox-metric-unit">%</span>
-              </>
-            )
-          }
-          note={`${enabled} из ${total} модулей Shield`}
-        />
+      <dl className="nd-vitals" aria-label="Статистика сообщества">
+        <div className="nd-vital">
+          <dt>
+            Сообщения сегодня <span aria-hidden="true">01</span>
+          </dt>
+          <dd>{formatNumber(stats.messages_today)}</dd>
+          <span className="nd-vital-note">
+            <span aria-hidden="true" />
+            За текущие сутки
+          </span>
+        </div>
+        <div className="nd-vital">
+          <dt>
+            Участники <span aria-hidden="true">02</span>
+          </dt>
+          <dd>{formatNumber(stats.members)}</dd>
+          <span className="nd-vital-note">В сообществе</span>
+        </div>
       </dl>
 
-      <section
-        className="nox-activity-panel"
-        aria-labelledby="nox-activity-title"
-      >
-        <header className="nox-section-header">
-          <div>
-            <span className="nox-eyebrow">АКТИВНОСТЬ</span>
-            <h2 id="nox-activity-title">Пульс сообщества</h2>
-            <p>Сообщения и нарушения — на отдельных шкалах</p>
-          </div>
-          <span className="nox-period-label">
-            {activity.length ? `${activity.length} дней` : "Нет данных"}
+      <Link to="/shield" className="nd-shield-strip">
+        <span className="nd-shield-emblem" aria-hidden="true">
+          <ShieldCheck size={22} strokeWidth={1.5} />
+        </span>
+        <span className="nd-shield-copy">
+          <strong>Astra Shield</strong>
+          <span>
+            {total
+              ? `${enabled} из ${total} модулей включено`
+              : "Модули ещё не настроены"}
           </span>
-        </header>
-        <ActivityChart data={activity} />
-      </section>
+        </span>
+        <span className="nd-shield-meter" aria-hidden="true">
+          {Array.from({ length: Math.min(total, 20) }, (_, index) => (
+            <i
+              key={index}
+              data-on={
+                index < Math.round((enabled / total) * Math.min(total, 20))
+              }
+            />
+          ))}
+        </span>
+        <span className="nd-shield-open">
+          Настроить <ArrowUpRight size={17} aria-hidden="true" />
+        </span>
+        <ChevronRight
+          className="nd-shield-chevron"
+          size={18}
+          aria-hidden="true"
+        />
+      </Link>
 
-      <section className="nox-cases-section" aria-labelledby="nox-cases-title">
-        <header className="nox-section-header nox-section-header--cases">
-          <div>
-            <span className="nox-eyebrow">МОДЕРАЦИЯ</span>
-            <h2 id="nox-cases-title">Последние действия</h2>
-          </div>
-          <Link to="/moderation" className="nox-text-link">
-            Вся история
-            <ArrowUpRight size={16} aria-hidden="true" />
-          </Link>
-        </header>
-        {!recent_cases.length ? (
-          <div className="nox-cases-empty">
-            <Check size={22} aria-hidden="true" />
+      <div className="nd-work-grid">
+        <section className="nd-activity" aria-labelledby="nd-activity-title">
+          <header className="nd-section-heading">
             <div>
+              <p className="nd-kicker">01 / АНАЛИТИКА</p>
+              <h2 id="nd-activity-title">Ритм сообщества</h2>
+            </div>
+            <Link
+              to="/analytics"
+              className="nd-section-link"
+              aria-label="Открыть аналитику"
+            >
+              <ArrowUpRight size={20} aria-hidden="true" />
+            </Link>
+          </header>
+          <ActivityChart data={activity} />
+        </section>
+
+        <section className="nd-events" aria-labelledby="nd-events-title">
+          <header className="nd-section-heading">
+            <div>
+              <p className="nd-kicker">02 / МОДЕРАЦИЯ</p>
+              <h2 id="nd-events-title">В фокусе</h2>
+            </div>
+            <Link
+              to="/moderation"
+              className="nd-section-link"
+              aria-label="Открыть историю модерации"
+            >
+              <ArrowUpRight size={20} aria-hidden="true" />
+            </Link>
+          </header>
+          <div className="nd-event-summary">
+            <span>Действия сегодня</span>
+            <strong>{formatNumber(stats.actions_today)}</strong>
+          </div>
+          {!recent_cases.length ? (
+            <div className="nd-events-empty">
+              <Check size={24} aria-hidden="true" />
               <h3>История пока чиста</h3>
               <p>Здесь появятся действия модераторов и правил.</p>
             </div>
-          </div>
-        ) : (
-          <ul className="nox-cases-list">
-            {recent_cases.slice(0, 5).map((item) => (
-              <RecentCase key={item.id} item={item} />
-            ))}
-          </ul>
-        )}
-      </section>
+          ) : (
+            <ol className="nd-event-list">
+              {recent_cases.slice(0, 4).map((item) => (
+                <RecentCase key={item.id} item={item} />
+              ))}
+            </ol>
+          )}
+          <Link to="/moderation" className="nd-history-link">
+            Вся история <ArrowUpRight size={16} aria-hidden="true" />
+          </Link>
+        </section>
+      </div>
 
-      <nav className="nox-quick-links" aria-label="Быстрые действия">
+      <nav className="nd-shortcuts" aria-label="Быстрые действия">
         <QuickLink
           to="/moderation"
-          icon={<Shield size={18} />}
-          title="Модерация"
-          note="Участники и решения"
+          icon={<Users size={21} />}
+          title="Участники"
+          note="Люди и роли"
+          index="01"
         />
         <QuickLink
           to="/appeals"
-          icon={<ArrowDownRight size={18} />}
+          icon={<ArrowDownLeft size={21} />}
           title="Апелляции"
           note="Обратная связь"
-        />
-        <QuickLink
-          to="/shield"
-          icon={<Shield size={18} />}
-          title="Shield"
-          note="Модули защиты"
+          index="02"
         />
         <QuickLink
           to="/studio"
-          icon={<Workflow size={18} />}
-          title="Studio"
-          note="Ваши сценарии"
+          icon={<Workflow size={21} />}
+          title="Сценарии"
+          note="Автоматизация"
+          index="03"
         />
       </nav>
-    </div>
-  );
-}
-
-function Metric({
-  index,
-  label,
-  value,
-  note,
-}: {
-  index: string;
-  label: string;
-  value: ReactNode;
-  note: string;
-}) {
-  return (
-    <div className="nox-metric">
-      <dt>
-        <span className="nox-metric-index" aria-hidden="true">
-          {index}
-        </span>
-        {label}
-      </dt>
-      <dd>{value}</dd>
-      <span className="nox-metric-note">{note}</span>
+      <div className="nd-bottom-mark" aria-hidden="true">
+        <span>YOUR COMMUNITY. YOUR CONTROL.</span>
+        <span>ASTRA</span>
+      </div>
     </div>
   );
 }
@@ -269,7 +271,7 @@ function RecentCase({ item }: { item: Case }) {
             "unknown",
             "revoking",
           ].includes(item.status)
-        ? "warn"
+        ? "amber"
         : "muted";
   const initials =
     item.target_name
@@ -280,25 +282,27 @@ function RecentCase({ item }: { item: Case }) {
       .join("")
       .toUpperCase() || "N";
   return (
-    <li className="nox-case">
-      <span className="nox-case-avatar" aria-hidden="true">
+    <li className="nd-event">
+      <span className="nd-event-avatar" aria-hidden="true">
         {initials}
       </span>
-      <div className="nox-case-person">
-        <strong>{item.target_name}</strong>
-        <span title={item.reason}>{item.reason}</span>
+      <div className="nd-event-body">
+        <div className="nd-event-person">
+          <strong>{item.target_name}</strong>
+          <span data-tone={tone}>
+            {statusNames[item.status] ?? item.status}
+          </span>
+        </div>
+        <p>
+          <span>{caseNames[item.kind] ?? item.kind}</span>
+          <span aria-hidden="true">·</span>
+          {item.reason}
+        </p>
+        <div className="nd-event-meta">
+          <span>{item.actor_name}</span>
+          <time dateTime={item.created_at}>{formatDate(item.created_at)}</time>
+        </div>
       </div>
-      <div className="nox-case-action">
-        <span>{caseNames[item.kind] ?? item.kind}</span>
-        <span className="nox-case-actor">{item.actor_name}</span>
-      </div>
-      <time className="nox-case-time" dateTime={item.created_at}>
-        <Clock3 size={13} aria-hidden="true" />
-        {formatDate(item.created_at)}
-      </time>
-      <span className="nox-case-status" data-tone={tone}>
-        {statusNames[item.status] ?? item.status}
-      </span>
     </li>
   );
 }
@@ -308,22 +312,27 @@ function QuickLink({
   icon,
   title,
   note,
+  index,
 }: {
   to: string;
   icon: ReactNode;
   title: string;
   note: string;
+  index: string;
 }) {
   return (
-    <Link to={to} className="nox-quick-link">
-      <span className="nox-quick-icon" aria-hidden="true">
-        {icon}
+    <Link to={to} className="nd-shortcut">
+      <span className="nd-shortcut-top">
+        <span aria-hidden="true">{icon}</span>
+        <span>{index}</span>
       </span>
-      <span>
-        <strong>{title}</strong>
-        <span>{note}</span>
+      <span className="nd-shortcut-bottom">
+        <span>
+          <strong>{title}</strong>
+          <span>{note}</span>
+        </span>
+        <ArrowUpRight size={20} aria-hidden="true" />
       </span>
-      <ChevronRight size={15} aria-hidden="true" />
     </Link>
   );
 }
@@ -331,15 +340,15 @@ function QuickLink({
 function DashboardSkeleton() {
   return (
     <div
-      className="nox-dashboard nox-dashboard-loading"
+      className="nd-dashboard nd-loading"
       role="status"
       aria-busy="true"
       aria-label="Загрузка обзора"
     >
-      <span className="nox-screen-reader-only">Загрузка обзора сообщества</span>
-      <div className="nox-skeleton nox-skeleton--hero" />
-      <div className="nox-skeleton nox-skeleton--metrics" />
-      <div className="nox-skeleton nox-skeleton--chart" />
+      <span className="nd-sr-only">Загрузка обзора сообщества</span>
+      <div className="nd-skeleton nd-skeleton-hero" />
+      <div className="nd-skeleton nd-skeleton-vitals" />
+      <div className="nd-skeleton nd-skeleton-chart" />
     </div>
   );
 }

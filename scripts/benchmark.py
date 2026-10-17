@@ -1,4 +1,4 @@
-"""Measure a running NOX HTTP API; never substitute in-process requests.
+"""Measure a running Astra HTTP API; never substitute in-process requests.
 
 Use a dedicated demo instance and set NOX_API_RATE_LIMIT high enough for the
 chosen load. A 429 is counted as an error, not silently excluded from latency.

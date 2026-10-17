@@ -1,4 +1,4 @@
-name: NOX quality gates
+name: Astra quality gates
 on:
   push:
   pull_request:

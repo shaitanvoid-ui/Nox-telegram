@@ -1,15 +1,3 @@
 @import "tailwindcss";
-@import "./styles/tokens-base.css";
-@import "./styles/controls.css";
-@import "./styles/brand-shell.css";
-@import "./styles/overview-and-cases.css";
-@import "./styles/community-pages.css";
-@import "./styles/automation-analytics.css";
-@import "./styles/settings-reviews.css";
-@import "./styles/forms-feedback.css";
-@import "./styles/welcome-motion.css";
-@import "./styles/responsive-desktop.css";
-@import "./styles/responsive-mobile.css";
-@import "./styles/responsive-compact.css";
-@import "./styles/runtime-controls.css";
-@import "./styles/responsive-refinements.css";
+@import "./styles/foundations.css";
+@import "./styles/ui.css";

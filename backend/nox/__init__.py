@@ -1,1 +1,1 @@
-"""NOX shared application services, API, and Telegram bot."""
+"""Astra shared application services, API, and Telegram bot."""

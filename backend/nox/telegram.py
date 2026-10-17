@@ -122,7 +122,7 @@ class TelegramGateway:
             raise TelegramGatewayError("self_target", "Нельзя применить наказание к себе.")
         bot_id = await self.bot_id()
         if target_id == bot_id:
-            raise TelegramGatewayError("bot_target", "Нельзя применить наказание к NOX.")
+            raise TelegramGatewayError("bot_target", "Нельзя применить наказание к Astra.")
         actor, target, bot_member = await asyncio.gather(
             _telegram_call(self.bot.get_chat_member(chat_id, actor_id)),
             _telegram_call(self.bot.get_chat_member(chat_id, target_id)),
@@ -138,7 +138,7 @@ class TelegramGateway:
             )
         if not _can_restrict(bot_member):
             raise TelegramGatewayError(
-                "bot_forbidden", "Выдайте NOX право блокировки участников в Telegram."
+                "bot_forbidden", "Выдайте Astra право блокировки участников в Telegram."
             )
 
     async def perform(
@@ -216,7 +216,7 @@ class TelegramGateway:
             and bool(getattr(member, "can_delete_messages", False))
         ):
             raise TelegramGatewayError(
-                "bot_forbidden", "Выдайте NOX право удаления сообщений в Telegram."
+                "bot_forbidden", "Выдайте Astra право удаления сообщений в Telegram."
             )
         result = await _telegram_call(self.bot.delete_message(chat_id, message_id), mutation=True)
         if result is not True:

@@ -1,254 +1,926 @@
-/* Shared reading scale and touch geometry around the Kontur workspace. */
-:root {
-  --border: rgba(146, 156, 178, 0.15);
-  --muted: #929cb2;
+/* Spatial shell: black glass, brushed graphite, restrained violet light. */
+.nox-shell {
+  min-height: 100dvh;
+  background: #050506;
 }
-.sidebar {
+.nox-brand-link,
+.nox-mobile-brand {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: none;
+}
+.nox-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: 236px;
+  padding: calc(32px + var(--safe-top, 0px)) 20px 20px;
+  background: linear-gradient(150deg, #171719 0%, #0b0b0d 29%, #0b0b0d 100%);
+  border-right: 1px solid #ffffff0e;
   overflow-y: auto;
 }
-.sidebar-note,
-.content-footer {
+.nox-sidebar .brand {
+  gap: 9px;
+}
+.nox-sidebar .brand-os {
   display: none;
 }
-.button {
-  min-height: 44px;
-  font-size: 13px;
-}
-.icon-button {
-  min-height: 44px;
-  min-width: 44px;
-}
-input,
-textarea,
-select {
-  font-size: 16px;
-}
-.section-heading h2 {
-  font-size: 17px;
-}
-.section-heading p {
-  font-size: 12px;
-  color: #929cb2;
-}
-.page-header p {
-  font-size: 14px;
-  color: #929cb2;
-}
-.text-link {
-  min-height: 44px;
-  font-size: 12px;
-}
-.module-card > p,
-.shield-summary p,
-.emergency-panel p,
-.studio-intro p,
-.intelligence-hero p,
-.appeals-principle p,
-.settings-panel p,
-.privacy-note {
-  font-size: 13px;
-  color: #929cb2;
-}
-.module-card h2,
-.emergency-panel h2,
-.shield-summary h2 {
-  font-size: 17px;
-}
-.module-card-bottom > span,
-.rule-card-top > div > span,
-.field small,
-.audit-row p,
-.privacy-note {
-  font-size: 12px;
-}
-.field > span,
-.audit-row strong {
-  font-size: 14px;
-}
-.modal-header p,
-.modal-copy {
-  font-size: 14px;
-  color: #929cb2;
-}
-.modal-header .eyebrow {
+.nox-workspace-caption {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  margin: 44px 0 11px;
   font-size: 10px;
+  letter-spacing: 1.3px;
+  color: #77767f;
 }
-.modal-actions .button {
-  min-height: 44px;
+.nox-workspace-caption > span {
+  color: #45454d;
+}
+.nox-chat-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  min-width: 0;
+  min-height: 54px;
+  padding: 6px 12px;
+  border: 1px solid #ffffff12;
+  border-radius: 13px;
+  background: linear-gradient(120deg, #ffffff08, #ffffff01);
+  box-shadow: inset 0 1px 0 #ffffff03;
+}
+.nox-chat-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  height: 30px;
+  border: 1px solid #ffffff13;
+  border-radius: 9px;
+  color: #efedf6;
   font-size: 13px;
+  background: #27252d;
 }
-.tabs button {
+.nox-chat-picker select {
+  appearance: none;
+  width: 100%;
+  min-width: 0;
   min-height: 44px;
+  padding: 0 16px 0 0;
+  border: 0;
+  border-radius: 0;
+  outline-offset: 5px;
+  background: transparent;
+  color: #e7e5ed;
+  text-overflow: ellipsis;
   font-size: 13px;
+  cursor: pointer;
 }
-.search-input input {
-  min-height: 44px;
+.nox-chat-picker select:disabled {
+  cursor: default;
+  color: #85818f;
+}
+.nox-chat-picker option {
+  background: #151418;
+  color: #f6f4fb;
+}
+.nox-chat-picker > svg {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: #8b8795;
+}
+.nox-desktop-nav {
+  display: grid;
+  gap: 5px;
+  margin-top: 28px;
+}
+.nox-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 45px;
+  padding: 10px 13px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  text-decoration: none;
+  color: #96929f;
+  font-size: 13px;
+  transition:
+    background 180ms,
+    border-color 180ms,
+    color 180ms;
+}
+.nox-nav-link > svg {
+  flex-shrink: 0;
+  color: #797580;
+}
+.nox-nav-link:hover {
+  color: #f3f1f8;
+  background: #ffffff05;
+}
+.nox-nav-link.is-active {
+  color: #fff;
+  border-color: #ffffff13;
+  background: linear-gradient(100deg, #ffffff0f, #ffffff04);
+  box-shadow: inset 0 1px #ffffff06;
+}
+.nox-nav-link.is-active::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: 13px;
+  bottom: 13px;
+  width: 2px;
+  border-radius: 2px;
+  background: #b8a0ff;
+  box-shadow: 0 0 16px #8e5cff66;
+}
+.nox-nav-link.is-active > svg {
+  color: #c4adff;
+}
+.nox-nav-index {
+  margin-left: auto;
+  font-size: 10px;
+  color: #45424c;
+  font-variant-numeric: tabular-nums;
+}
+.nox-nav-link.is-active .nox-nav-index {
+  color: #aba4b9;
+}
+.nox-sidebar-account {
+  margin-top: auto;
+  padding-top: 44px;
+}
+.nox-account-identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 17px;
+  border-top: 1px solid #ffffff0d;
+}
+.nox-account-identity .avatar,
+.nox-menu-account .avatar {
+  flex-shrink: 0;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #252329;
+  color: #d4cedf;
+  font-size: 11px;
+}
+.nox-account-identity > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.nox-account-identity strong {
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nox-account-identity small {
+  font-size: 10px;
+  color: #87818e;
+}
+.nox-logout {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #8e8899;
+  background: transparent;
+  cursor: pointer;
+  margin-left: auto;
+}
+.nox-logout:hover {
+  color: #fff;
+  background: #ffffff08;
+}
+.nox-build {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0 0;
+  font-size: 9px;
+  letter-spacing: 0.3px;
+  color: #716b7c;
+}
+.nox-build > span:last-child {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  letter-spacing: 0;
+}
+.nox-build i,
+.nox-live-dot {
+  display: inline-block;
+  flex: 0 0 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #716b7c;
+}
+.nox-build i.is-online {
+  background: #b1c4b4;
+}
+.nox-workspace {
+  min-width: 0;
+  margin-left: 236px;
+}
+.nox-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: calc(72px + var(--safe-top, 0px));
+  padding: var(--safe-top, 0px) 42px 0;
+  border-bottom: 1px solid #ffffff0b;
+}
+.nox-desktop-heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #dad6e2;
+  font-size: 12px;
+}
+.nox-desktop-heading > span {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #706b7a;
+}
+.nox-desktop-heading i {
+  width: 1px;
+  height: 12px;
+  background: #ffffff1c;
+  transform: rotate(20deg);
+}
+.nox-topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b8b1c3;
+  font-size: 9px;
+  letter-spacing: 0.7px;
+}
+.nox-topbar-status .nox-live-dot {
+  background: #b1c4b4;
+}
+.nox-topbar-role {
+  font-size: 11px;
+  color: #7d7689;
+  margin-left: 12px;
+  padding-left: 18px;
+  border-left: 1px solid #ffffff12;
+  letter-spacing: 0;
+}
+.nox-mobile-brand,
+.nox-mobile-chat,
+.nox-mobile-menu-button,
+.nox-dock {
+  display: none;
+}
+.nox-demo-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 42px;
+  background: #17131e;
+  border-bottom: 1px solid #b6a0d011;
+  color: #b8aec9;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.nox-demo-disclosure svg {
+  flex-shrink: 0;
+  color: #b8a6cf;
+}
+.nox-demo-disclosure strong {
+  font-weight: 500;
+  color: #e0d7ed;
+}
+.nox-main {
+  width: 100%;
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 40px 42px 20px;
+}
+.nox-workspace-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 50px;
+  padding: 18px 0 8px;
+  border-top: 1px solid #ffffff0b;
+  color: #615c6c;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+}
+.nox-menu-nav {
+  display: grid;
+  gap: 5px;
+}
+.nox-menu-nav .nox-nav-link {
+  min-height: 48px;
+  font-size: 14px;
+}
+.nox-menu-nav .nox-nav-link.is-active::before {
+  display: none;
+}
+.nox-menu-account {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #ffffff12;
+}
+.nox-menu-account > span {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+.nox-menu-account small {
+  color: #8b8397;
+  font-size: 12px;
+}
+
+/* Public entry: a single cinematic composition with real authentication. */
+.nox-welcome {
+  position: relative;
+  min-height: 100dvh;
+  padding: calc(30px + var(--safe-top, 0px)) 5vw
+    calc(24px + var(--safe-bottom, 0px));
+  background: #050506;
+  overflow: hidden;
+}
+.nox-welcome-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 1540px;
+  margin: 0 auto;
+}
+.nox-welcome-header > span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #8a838f;
+  font-size: 9px;
+  letter-spacing: 1.1px;
+}
+.nox-welcome-header i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a69aae;
+}
+.nox-welcome-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 1540px;
+  min-height: min(78dvh, 850px);
+  margin: 0 auto;
+}
+.nox-welcome-art {
+  position: absolute;
+  inset: -70px -12% -5% 6%;
+  z-index: 0;
+  pointer-events: none;
+}
+.nox-welcome-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.nox-welcome-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      #050506 0%,
+      #050506d9 23%,
+      #05050680 40%,
+      transparent 63%
+    ),
+    linear-gradient(0deg, #050506 0%, transparent 17%);
+}
+.nox-welcome-copy {
+  position: relative;
+  z-index: 1;
+  width: 68%;
+  padding: 70px 0;
+}
+.nox-welcome-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  color: #b9b1c7;
+  font-size: 10px;
+  letter-spacing: 1.7px;
+}
+.nox-welcome-eyebrow > span {
+  width: 6px;
+  height: 6px;
+  border: 1px solid #b69cfa;
+  border-radius: 50%;
+  box-shadow: 0 0 16px #9c6df34d;
+}
+.nox-welcome h1 {
+  margin: 0;
+  color: #f7f5fc;
+  font-family: var(--font-display, Manrope, sans-serif);
+  font-size: clamp(58px, 6.4vw, 105px);
+  font-weight: 500;
+  line-height: 0.99;
+  letter-spacing: -0.065em;
+}
+.nox-welcome h1 > span {
+  color: #c3bacf;
+}
+.nox-welcome-mobile-break {
+  display: none;
+}
+.nox-welcome-copy > p {
+  margin: 29px 0 0;
+  color: #a6a0ae;
   font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: -0.2px;
 }
-.table-footer,
-.table-footer .pagination > span {
+.nox-welcome-entry {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+  margin-top: 34px;
+  max-width: 430px;
+}
+.nox-welcome-cta.button {
+  display: inline-flex;
+  justify-content: space-between;
+  gap: 26px;
+  min-height: 55px;
+  padding: 8px 9px 8px 24px;
+  border: 1px solid #fff;
+  border-radius: 100px;
+  color: #17131c;
+  background: linear-gradient(180deg, #fff, #dcd8e3);
+  box-shadow:
+    inset 0 2px 2px #ffffffcc,
+    0 6px 30px #b49bd115;
+  font-size: 13px;
+  font-weight: 600;
+}
+.nox-welcome-cta.button > svg:last-child {
+  box-sizing: content-box;
+  padding: 9px;
+  border-radius: 50%;
+  background: #201a2b;
+  color: #fff;
+}
+.nox-welcome-cta.button:hover {
+  background: #fff;
+  box-shadow: 0 0 28px #b49bd12b;
+  transform: translateY(-1px);
+}
+.nox-welcome-cta.button:disabled {
+  opacity: 0.7;
+}
+.nox-welcome-demo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #837a91;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.nox-welcome-demo > svg {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.nox-welcome-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #b5a9c4;
+  font-size: 14px;
+  min-height: 55px;
+}
+.nox-welcome-status .nox-live-dot {
+  background: #baa1eb;
+}
+.nox-telegram-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #ffffff17;
+  border-radius: 17px;
+  background: #111015b8;
+  color: #bca8dd;
+  backdrop-filter: blur(12px);
+}
+.nox-telegram-entry > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.nox-telegram-entry strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: #eee8f6;
+}
+.nox-telegram-entry p {
+  margin: 8px 0 0;
+  color: #a39aaf;
   font-size: 12px;
   line-height: 1.7;
 }
-.table-footer .pagination .button {
-  min-height: 44px;
-  font-size: 12px;
+.nox-welcome-entry .error-state {
+  width: 100%;
+  text-align: left;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid #ffffff12;
+  border-radius: 16px;
+  background: #151019da;
 }
-.case-person strong,
-.member-name strong {
-  font-size: 13px;
+.nox-welcome-art-caption {
+  position: absolute;
+  right: 0;
+  bottom: 48px;
+  z-index: 1;
+  color: #9b91aa;
+  font-size: 9px;
+  line-height: 1.8;
+  letter-spacing: 1px;
 }
-.case-person > div > span,
-.member-name > span {
-  font-size: 12px;
-  color: #929cb2;
+.nox-welcome-footer {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 20px;
+  max-width: 1540px;
+  margin: 0 auto;
+  padding-top: 24px;
+  border-top: 1px solid #ffffff19;
+  color: #aaa2b6;
+  font-size: 10px;
+  letter-spacing: 0.7px;
 }
-.case-action {
-  font-size: 12px;
-  min-width: 0;
-  overflow-wrap: anywhere;
+.nox-welcome-footer > span:last-child {
+  color: #706679;
 }
-.case-date {
-  font-size: 11px;
-  color: #929cb2;
-  flex-wrap: wrap;
-}
-.case-row .badge {
-  font-size: 11px;
-  white-space: normal;
-}
-.case-table-head {
-  font-size: 11px;
-  color: #929cb2;
-}
-.member-row .badge {
-  font-size: 11px;
-}
-.member-joined {
-  font-size: 12px;
-}
-.metric-top > span:first-child {
-  font-size: 12px;
-}
-.metric-note {
-  font-size: 12px;
-  line-height: 1.6;
-}
-.metric-value {
-  font-variant-numeric: tabular-nums;
-}
-.rule-card-top h2 {
-  font-size: 16px;
-}
-.rule-flow > span,
-.rule-card-bottom .text-link {
-  font-size: 12px;
-}
-.flow-demo span {
-  font-size: 13px;
-}
-.flow-demo small {
-  font-size: 11px;
-}
-.policy-card h3 {
-  font-size: 14px;
-}
-.policy-card p {
-  font-size: 12px;
-}
-.appeal-card > p {
-  font-size: 14px;
-}
-.appeal-bottom .button {
-  min-height: 44px;
-  font-size: 12px;
-}
-@media (min-width: 768px) {
-  .nav-link {
-    font-size: 14px;
-    min-height: 46px;
+
+@media (min-width: 1600px) {
+  .nox-sidebar {
+    width: 254px;
+    padding-left: 24px;
+    padding-right: 24px;
   }
-  .sidebar-chat strong {
-    font-size: 13px;
+  .nox-workspace {
+    margin-left: 254px;
   }
-  .sidebar-chat > div > span {
-    font-size: 11px;
+}
+@media (min-width: 768px) and (max-width: 1100px) {
+  .nox-sidebar {
+    width: 208px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
-  .workspace-label {
-    font-size: 10px;
-    letter-spacing: 1px;
+  .nox-workspace {
+    margin-left: 208px;
   }
-  .profile strong {
-    font-size: 13px;
+  .nox-topbar {
+    padding-left: 28px;
+    padding-right: 28px;
   }
-  .profile small,
-  .sidebar-version {
-    font-size: 11px;
+  .nox-main {
+    padding: 30px 28px 18px;
   }
-  .breadcrumbs,
-  .connection {
+  .nox-demo-disclosure {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  .nox-nav-link {
+    gap: 10px;
+    padding-left: 10px;
     font-size: 12px;
   }
-  .topbar .badge {
-    font-size: 11px;
+  .nox-nav-link.is-active::before {
+    left: -15px;
   }
-  .demo-banner {
+  .nox-nav-index,
+  .nox-topbar-role {
+    display: none;
+  }
+  .nox-chat-picker {
+    gap: 7px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .nox-chat-picker select {
     font-size: 12px;
   }
-  .demo-label {
-    font-size: 10px;
-  }
-  .page-header h1 {
-    font-size: 32px;
+  .nox-account-identity small {
+    font-size: 9px;
   }
 }
 @media (max-width: 767px) {
-  .main-content {
-    padding-bottom: calc(96px + var(--safe-bottom));
+  .nox-sidebar,
+  .nox-desktop-heading,
+  .nox-topbar-status {
+    display: none;
   }
-  .bottom-nav > a,
-  .bottom-nav > button {
-    min-height: 56px;
+  .nox-workspace {
+    margin-left: 0;
   }
-  .bottom-nav > a > span,
-  .bottom-nav > button > span {
+  .nox-topbar {
+    justify-content: initial;
+    gap: 12px;
+    min-height: calc(64px + var(--safe-top, 0px));
+    padding: var(--safe-top, 0px) 20px 0;
+  }
+  .nox-mobile-brand {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  .nox-mobile-brand .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .nox-mobile-chat {
+    display: block;
+    flex: 1;
+    min-width: 0;
+  }
+  .nox-chat-picker-mobile {
+    gap: 0;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .nox-chat-picker-mobile select {
+    font-size: 16px;
+    min-height: 44px;
+    padding-right: 18px;
+    color: #e6e1ef;
+  }
+  .nox-chat-picker-mobile > svg {
+    right: 1px;
+  }
+  .nox-mobile-menu-button {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    color: #c6bece;
+    cursor: pointer;
+  }
+  .nox-mobile-menu-button:hover {
+    background: #ffffff0a;
+  }
+  .nox-demo-disclosure {
+    gap: 7px;
+    min-height: 32px;
+    padding: 6px 20px;
     font-size: 10px;
   }
-  .demo-banner {
+  .nox-demo-disclosure svg {
+    width: 12px;
+    height: 12px;
+  }
+  .nox-main {
+    padding: 28px 20px calc(112px + var(--safe-bottom, 0px));
+  }
+  .nox-workspace-footer {
+    margin-top: 32px;
+    padding-top: 17px;
+    font-size: 8px;
+    letter-spacing: 0.45px;
+  }
+  .nox-workspace-footer > span:last-child {
+    display: none;
+  }
+  .nox-dock {
+    position: fixed;
+    z-index: 40;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    gap: 3px;
+    left: max(12px, calc((100vw - 440px) / 2));
+    right: max(12px, calc((100vw - 440px) / 2));
+    bottom: calc(12px + var(--safe-bottom, 0px));
+    min-height: 68px;
+    padding: 6px;
+    border: 1px solid #ffffff26;
+    border-radius: 25px;
+    background: linear-gradient(115deg, #29272d, #141217 52%, #201c27);
+    box-shadow:
+      inset 0 1px #ffffff12,
+      0 12px 40px #0009,
+      0 0 0 5px #05050644;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+  .nox-dock > a,
+  .nox-dock > button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    min-height: 54px;
+    padding: 5px 0;
+    border: 1px solid transparent;
+    border-radius: 18px;
+    color: #a29aa9;
+    background: transparent;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .nox-dock > a > span,
+  .nox-dock > button > span {
+    font-size: 10px;
+    line-height: 1.3;
+    white-space: nowrap;
+    letter-spacing: -0.1px;
+  }
+  .nox-dock > .is-active {
+    color: #fff;
+    border-color: #ffffff22;
+    background: linear-gradient(145deg, #ffffff24, #ffffff0b);
+    box-shadow: inset 0 1px 1px #ffffff15;
+  }
+  .nox-dock > .is-active svg {
+    color: #d7c2ff;
+  }
+  html[data-keyboard="true"]:has(input:focus, textarea:focus, select:focus)
+    .nox-dock {
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .nox-menu-nav .nox-nav-link {
+    min-height: 47px;
+  }
+  .nox-welcome {
+    padding: calc(22px + var(--safe-top, 0px)) 22px
+      calc(22px + var(--safe-bottom, 0px));
+  }
+  .nox-welcome-header > span {
+    font-size: 7px;
+    max-width: 112px;
+    line-height: 1.5;
+    letter-spacing: 0.6px;
+  }
+  .nox-welcome-header .brand-os {
+    display: none;
+  }
+  .nox-welcome-stage {
+    min-height: auto;
+    display: block;
+    padding-top: 235px;
+  }
+  .nox-welcome-art {
+    inset: -35px -30% auto;
+    height: 395px;
+  }
+  .nox-welcome-art img {
+    object-fit: cover;
+    object-position: center 39%;
+  }
+  .nox-welcome-art::after {
+    background:
+      linear-gradient(0deg, #050506 0%, #05050600 50%),
+      linear-gradient(180deg, #05050644, transparent 30%);
+  }
+  .nox-welcome-copy {
+    width: 100%;
+    padding: 0 0 34px;
+  }
+  .nox-welcome-eyebrow {
+    margin-bottom: 21px;
+    font-size: 8px;
+    letter-spacing: 1.4px;
+  }
+  .nox-welcome h1 {
+    font-size: clamp(44px, 11.8vw, 70px);
+    line-height: 1.01;
+    letter-spacing: -0.065em;
+  }
+  .nox-welcome h1 > span {
+    color: #aaa1b7;
+  }
+  .nox-welcome-mobile-break {
+    display: initial;
+  }
+  .nox-welcome-copy > p {
+    margin-top: 22px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .nox-welcome-entry {
+    margin-top: 26px;
+    gap: 15px;
+  }
+  .nox-welcome-cta.button {
+    min-height: 54px;
+    width: 100%;
+    padding-left: 21px;
     font-size: 12px;
-    line-height: 1.6;
   }
-  .mobile-chat select {
-    font-size: 16px;
-    max-width: calc(100% - 55px);
+  .nox-welcome-demo {
+    font-size: 10px;
   }
-  .case-person > div > span {
-    white-space: normal;
-    overflow-wrap: anywhere;
+  .nox-welcome-art-caption {
+    display: none;
   }
-  .case-action {
-    font-size: 11px;
+  .nox-welcome-footer {
+    grid-template-columns: repeat(3, 1fr);
+    padding-top: 18px;
+    gap: 6px;
+    font-size: 7px;
+    letter-spacing: 0.2px;
   }
-  .case-date,
-  .case-row > .badge {
-    font-size: 11px;
-  }
-  .field > span {
-    font-size: 14px;
-  }
-  .table-footer .pagination {
-    flex-wrap: wrap;
-  }
-  .list-toolbar {
-    gap: 16px;
-  }
-  .distribution-row {
-    grid-template-columns: minmax(0, 1fr) minmax(40px, 1fr) 25px;
+  .nox-welcome-footer > span:last-child {
+    display: none;
   }
 }
-.field-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #c8d0e3;
-  line-height: 1.6;
+@media (max-width: 359px) {
+  .nox-topbar {
+    gap: 9px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .nox-demo-disclosure {
+    padding-left: 15px;
+    padding-right: 15px;
+    font-size: 9px;
+  }
+  .nox-main {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .nox-dock {
+    left: 8px;
+    right: 8px;
+    gap: 1px;
+    padding: 5px;
+  }
+  .nox-dock > a > span,
+  .nox-dock > button > span {
+    font-size: 9px;
+  }
+  .nox-welcome {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .nox-welcome-stage {
+    padding-top: 195px;
+  }
+  .nox-welcome-art {
+    height: 350px;
+  }
+  .nox-welcome h1 {
+    font-size: 43px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nox-nav-link,
+  .nox-welcome-cta.button {
+    transition: none;
+  }
+  .nox-welcome-cta.button:hover {
+    transform: none;
+  }
 }

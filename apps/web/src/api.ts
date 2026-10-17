@@ -25,7 +25,7 @@ async function request<T>(
   } catch {
     throw new ApiError(
       0,
-      "Не удалось связаться с NOX API. Проверьте подключение и повторите попытку.",
+      "Не удалось связаться с Astra API. Проверьте подключение и повторите попытку.",
     );
   }
   if (!response.ok) {

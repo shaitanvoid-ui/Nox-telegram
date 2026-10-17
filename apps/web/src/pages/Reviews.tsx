@@ -3,13 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   BrainCircuit,
   Check,
-  Eye,
-  Fingerprint,
+  CircleDot,
   MessageSquare,
   Plus,
   Scale,
-  ShieldCheck,
-  Sparkles,
   X,
 } from "lucide-react";
 import type { Appeal, Case, Intelligence, Page } from "../types";
@@ -27,103 +24,107 @@ import {
   PageHeader,
   SectionHeading,
 } from "../components/ui";
+import "../styles/advanced-pages.css";
+
 export function IntelligencePage() {
   const query = useChatQuery<Intelligence>("intelligence");
-  if (query.isPending) return <Loading />;
+  if (query.isPending) return <Loading label="Загружаем сигналы" />;
   if (query.isError)
     return (
       <ErrorState error={query.error} retry={() => void query.refetch()} />
     );
   const data = query.data;
   return (
-    <div className="page-enter">
+    <div className="page-enter ap-page">
       <PageHeader
-        eyebrow="NOX INTELLIGENCE / CONTEXT MATTERS"
-        title="Контекст важнее совпадений"
-        description="Интеллектуальный слой с понятными границами и правом на пересмотр."
+        eyebrow="02 / ASTRA INTELLIGENCE"
+        title="Разбор сигналов"
+        description="Автоматические фильтры находят повод для проверки. Решение принимает человек."
         action={
           <Badge tone={data.enabled ? "green" : "muted"}>
-            {data.enabled ? "Анализ включён" : "Провайдер не подключён"}
+            {data.enabled ? "AI подключён" : "AI не подключён"}
           </Badge>
         }
       />
-      <section className="intelligence-hero panel">
-        <div className="intelligence-symbol">
-          <BrainCircuit size={54} strokeWidth={1.2} />
-          <span />
-          <span />
+      <section className="panel ap-intelligence-status">
+        <div className="ap-intelligence-icon" aria-hidden="true">
+          <BrainCircuit size={74} strokeWidth={0.8} />
         </div>
         <div>
-          <Badge tone="violet">
-            <Sparkles size={12} />
-            HUMAN IN CONTROL
-          </Badge>
+          <span className="eyebrow">HUMAN IN THE LOOP</span>
           <h2>
-            Помощник.
-            <br />
-            <span>С правом сомневаться.</span>
+            {data.enabled
+              ? "Контекст под наблюдением"
+              : "Фильтры работают. AI ожидает подключения."}
           </h2>
           <p>{data.notice}</p>
+          <Badge>
+            Политика:{" "}
+            {data.policy === "review_only" ? "ручная проверка" : data.policy}
+          </Badge>
         </div>
       </section>
-      <div className="policy-grid">
-        <section className="panel policy-card">
-          <Eye size={25} />
-          <h3>Сначала — проверка</h3>
-          <p>Неуверенная оценка направляется на ручное рассмотрение.</p>
-        </section>
-        <section className="panel policy-card">
-          <ShieldCheck size={25} />
-          <h3>Предсказуемые границы</h3>
-          <p>Серьёзное наказание не назначается по одной неуверенной оценке.</p>
-        </section>
-        <section className="panel policy-card">
-          <Fingerprint size={25} />
-          <h3>Меньше данных</h3>
-          <p>
-            Контекст передаётся только подключённому провайдеру по политике
-            сообщества.
-          </p>
-        </section>
-      </div>
-      <section className="panel">
+      <div className="ap-review-heading">
         <SectionHeading
-          title="Очередь проверок"
-          meta={`Политика: ${data.policy === "review_only" ? "ручная проверка" : data.policy}`}
+          title="Сигналы для проверки"
+          meta="Эвристическая оценка не доказывает нарушение."
         />
-        <div className="intelligence-queue">
-          {!data.items.length ? (
-            <Empty
-              title={
-                data.enabled
-                  ? "Очередь пуста"
-                  : "Интеллектуальный слой ожидает подключения"
-              }
-              description={
-                data.enabled
-                  ? "Здесь появятся сообщения, которым требуется внимание модератора."
-                  : "AI-провайдер не настроен. Обычные фильтры NOX Shield продолжают работать; сообщения не отправляются внешней модели."
-              }
-            />
-          ) : (
-            data.items.map((item) => (
-              <article className="review-item" key={item.id}>
-                <Badge tone="amber">Эвристический сигнал · {item.module}</Badge>
-                <blockquote>{item.detail}</blockquote>
-                <p>
-                  Участник {item.user_id} · {formatDate(item.created_at)}
-                </p>
-                <span className="muted">
-                  Эвристическая оценка требует проверки человеком.
+        <span className="ap-queue-count">
+          {String(data.items.length).padStart(2, "0")}
+        </span>
+      </div>
+      {!data.items.length ? (
+        <section className="panel">
+          <Empty
+            title="Очередь пуста"
+            description={
+              data.enabled
+                ? "Когда сообщение потребует внимания, оно появится здесь."
+                : "Здесь появятся эвристические сигналы Astra Shield. Внешняя AI-модель не подключена; сообщения ей не отправляются."
+            }
+          />
+        </section>
+      ) : (
+        <div className="ap-signals">
+          {data.items.map((item, index) => (
+            <article className="panel ap-signal" key={item.id}>
+              <header>
+                <span className="ap-index">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
-              </article>
-            ))
-          )}
+                <Badge tone="amber">
+                  <CircleDot size={13} />
+                  {item.module}
+                </Badge>
+                <span className="ap-signal-kind">Эвристический сигнал</span>
+              </header>
+              <blockquote>{item.detail}</blockquote>
+              <footer>
+                <div>
+                  <span>Участник {item.user_id}</span>
+                  <time dateTime={item.created_at}>
+                    {formatDate(item.created_at)}
+                  </time>
+                </div>
+                <span className="ap-human-review">
+                  Требует проверки человеком
+                </span>
+              </footer>
+            </article>
+          ))}
         </div>
-      </section>
+      )}
+      <p className="ap-data-note">
+        <Scale size={17} />
+        <span>
+          Сигналы требуют ручной проверки. Серьёзные наказания не назначаются по
+          одной неуверенной оценке.
+        </span>
+      </p>
     </div>
   );
 }
+
 export function AppealsPage() {
   const query = useChatQuery<Page<Appeal>>("appeals");
   const cases = useChatQuery<Page<Case>>("cases");
@@ -147,6 +148,7 @@ export function AppealsPage() {
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ["chat", chat.id, "appeals"] });
       setCreate(false);
+      setCaseId("");
       setReason("");
       setNotice("Апелляция передана на рассмотрение.");
     },
@@ -172,12 +174,20 @@ export function AppealsPage() {
       void client.invalidateQueries({ queryKey: ["chat", chat.id] });
     },
   });
+  if (query.isPending) return <Loading label="Загружаем апелляции" />;
+  if (query.isError)
+    return (
+      <ErrorState error={query.error} retry={() => void query.refetch()} />
+    );
+  const pending = query.data.items.filter((appeal) =>
+    ["open", "pending"].includes(appeal.status),
+  ).length;
   return (
-    <div className="page-enter">
+    <div className="page-enter ap-page">
       <PageHeader
-        eyebrow="FAIRNESS / APPEALS"
-        title="Каждый голос имеет значение"
-        description="Пересматривайте решения открыто, сохраняя историю и контекст."
+        eyebrow="05 / HUMAN REVIEW"
+        title="Апелляции"
+        description="Возможность пересмотреть решение. С сохранением контекста и истории."
         action={
           <Button onClick={() => setCreate(true)}>
             <Plus size={17} />
@@ -185,37 +195,36 @@ export function AppealsPage() {
           </Button>
         }
       />
-      {notice && <Notice>{notice}</Notice>}
-      <section className="appeals-principle panel">
-        <Scale size={28} strokeWidth={1.4} />
+      <section className="panel ap-appeals-summary">
+        <Scale size={37} strokeWidth={1} />
+        <div>
+          <strong>{pending}</strong>
+          <span>ожидают рассмотрения</span>
+        </div>
         <p>
-          Справедливая модерация допускает пересмотр. Решение по апелляции
-          сохраняется отдельно от истории наказания.
+          Решение по обращению фиксируется отдельно. Отмена наказания
+          выполняется в центре модерации.
         </p>
-        <Badge tone="violet">HUMAN REVIEW</Badge>
       </section>
-      {query.isPending ? (
-        <Loading />
-      ) : query.isError ? (
-        <ErrorState error={query.error} retry={() => void query.refetch()} />
-      ) : !query.data.items.length ? (
+      {notice && <Notice>{notice}</Notice>}
+      {!query.data.items.length ? (
         <section className="panel">
           <Empty
             title="Апелляций пока нет"
-            description="Новые обращения участников появятся здесь после подачи."
+            description="После подачи обращения здесь появятся его причина, статус и история решения."
           />
         </section>
       ) : (
-        <div className="appeals-list">
+        <div className="ap-appeals">
           {query.data.items.map((item) => (
-            <section className="panel appeal-card" key={item.id}>
-              <div className="appeal-top">
-                <span className="quick-icon violet">
-                  <MessageSquare size={20} />
+            <article className="panel ap-appeal" key={item.id}>
+              <header>
+                <span className="ap-journal-mark">
+                  <MessageSquare size={18} />
                 </span>
                 <div>
                   <h2>{item.user_name}</h2>
-                  <small>Дело #{String(item.case_id).slice(0, 8)}</small>
+                  <span>Дело #{item.case_id.slice(0, 8)}</span>
                 </div>
                 <Badge
                   tone={
@@ -228,10 +237,12 @@ export function AppealsPage() {
                 >
                   {statusNames[item.status] ?? item.status}
                 </Badge>
-              </div>
-              <p>{item.reason}</p>
-              <div className="appeal-bottom">
-                <time>{formatDate(item.created_at)}</time>
+              </header>
+              <p className="ap-appeal-reason">{item.reason}</p>
+              <footer>
+                <time dateTime={item.created_at}>
+                  {formatDate(item.created_at)}
+                </time>
                 {["open", "pending"].includes(item.status) && (
                   <div>
                     <Button
@@ -240,7 +251,7 @@ export function AppealsPage() {
                         setResolve({ appeal: item, status: "rejected" })
                       }
                     >
-                      <X size={14} />
+                      <X size={15} />
                       Отклонить
                     </Button>
                     <Button
@@ -248,70 +259,84 @@ export function AppealsPage() {
                         setResolve({ appeal: item, status: "accepted" })
                       }
                     >
-                      <Check size={14} />
+                      <Check size={15} />
                       Принять
                     </Button>
                   </div>
                 )}
-              </div>
-            </section>
+              </footer>
+            </article>
           ))}
         </div>
       )}
       {create && (
         <Modal
           title="Подать апелляцию"
-          description="Объясните, почему решение стоит пересмотреть."
+          description="Добавьте контекст, который поможет пересмотреть решение."
           onClose={() => setCreate(false)}
         >
-          <form
-            className="form-stack"
-            onSubmit={(e) => {
-              e.preventDefault();
-              createMutation.mutate();
-            }}
-          >
-            <Field label="Действие модерации">
-              <select
-                required
-                value={caseId}
-                onChange={(e) => setCaseId(e.target.value)}
-              >
-                <option value="">Выберите действие</option>
-                {cases.data?.items.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.target_name}: {item.reason}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Причина пересмотра">
-              <textarea
-                required
-                minLength={5}
-                maxLength={2000}
-                rows={4}
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Добавьте важный контекст и объясните свою позицию."
-              />
-            </Field>
-            {createMutation.isError && (
-              <Notice error>{createMutation.error.message}</Notice>
-            )}
-            <div className="modal-actions">
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={() => setCreate(false)}
-              >
-                Отмена
-              </Button>
-              <Button type="submit" loading={createMutation.isPending}>
-                Отправить на рассмотрение
-              </Button>
-            </div>
-          </form>
+          {cases.isPending ? (
+            <Loading label="Загружаем действия модерации" />
+          ) : cases.isError ? (
+            <ErrorState
+              error={cases.error}
+              retry={() => void cases.refetch()}
+            />
+          ) : !cases.data.items.length ? (
+            <Empty
+              title="Нет доступных действий"
+              description="Чтобы подать апелляцию, нужно выбрать действие модерации."
+            />
+          ) : (
+            <form
+              className="form-stack"
+              onSubmit={(event) => {
+                event.preventDefault();
+                createMutation.mutate();
+              }}
+            >
+              <Field label="Действие модерации">
+                <select
+                  required
+                  value={caseId}
+                  onChange={(event) => setCaseId(event.target.value)}
+                >
+                  <option value="">Выберите действие</option>
+                  {cases.data.items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.target_name}: {item.reason}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Причина пересмотра">
+                <textarea
+                  required
+                  minLength={5}
+                  maxLength={2000}
+                  rows={4}
+                  value={reason}
+                  onChange={(event) => setReason(event.target.value)}
+                  placeholder="Почему это решение стоит пересмотреть?"
+                />
+              </Field>
+              {createMutation.isError && (
+                <Notice error>{createMutation.error.message}</Notice>
+              )}
+              <div className="modal-actions">
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => setCreate(false)}
+                >
+                  Отмена
+                </Button>
+                <Button type="submit" loading={createMutation.isPending}>
+                  Отправить на рассмотрение
+                </Button>
+              </div>
+            </form>
+          )}
         </Modal>
       )}
       {resolve && (
@@ -324,7 +349,7 @@ export function AppealsPage() {
           description={`Обращение: ${resolve.appeal.user_name}`}
           onClose={() => setResolve(null)}
         >
-          <p className="modal-copy muted">
+          <p className="ap-editor-hint">
             Решение будет зафиксировано в журнале. Отмена наказания выполняется
             отдельно в центре модерации.
           </p>
